@@ -22,24 +22,6 @@ if __name__ == '__main__':
     lego.gl_init(800,600)
     
     
-    glMatrixMode(GL_MODELVIEW)
-    glPushMatrix()
-    
-    glMatrixMode(GL_PROJECTION)
-    #glPushMatrix()
-    glLoadIdentity()
-    glCallList(lego.L_DRAW_2D)
-    
-    # draw stuf
-    
-    lego.draw_ortho_layer('data/ui.png')
-    
-    
-    #glMatrixMode(GL_PROJECTION)
-    #glPopMatrix()
-    
-    glMatrixMode(GL_MODELVIEW)
-    glPopMatrix()
     
     
     glTranslatef(0.0,0.0,-6)
@@ -58,12 +40,25 @@ if __name__ == '__main__':
         
         glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT)
         
+        glMatrixMode(GL_MODELVIEW)
+        glPushMatrix()
+        
+        glMatrixMode(GL_PROJECTION)
+        #glPushMatrix()
+        glLoadIdentity()
+        glCallList(lego.L_DRAW_2D)
+        
+        lego.draw_ortho_layer('data/ui.png')
+        
+        #glMatrixMode(GL_PROJECTION)
+        #glPopMatrix()
+        glMatrixMode(GL_MODELVIEW)
+        glPopMatrix()
+    
         glCallList(lego.L_DRAW_3D)
         
         glRotatef(rot_speed, 0.0, 1.0, 0.0)
         lego.draw_lego_brick(3, 5, lego.LEGO_SMALL)
-        
-        
         
         pygame.display.flip()
         pygame.time.wait(100)

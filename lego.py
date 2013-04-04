@@ -36,7 +36,7 @@ def gl_init(width, height):
 
     glClearColor(0.0, 0.2, 0.5, 1.0)
 
-    glEnable(GL_DEPTH_TEST)
+   
     
     glViewport(0,0,width,height)
 
@@ -52,18 +52,21 @@ def gl_init(width, height):
     gluPerspective(45.0, float(width)/float(height), 0.1, 100.0)
     glMatrixMode(GL_MODELVIEW)
     
+    glEnable(GL_DEPTH_TEST)
+    glDisable(GL_LIGHTING) # TODO: add lighting and enable it
+    glDisable(GL_TEXTURE_2D)
     glDisable(GL_CULL_FACE)
-    # TODO: add lighting and enabel
-    glDisable(GL_LIGHTING)
-
+    
     glEndList()
     
     glNewList(L_DRAW_2D, GL_COMPILE)
     glOrtho(0.0, width, height, 0.0, -1.0, 10.0)
     glMatrixMode(GL_MODELVIEW)
     glLoadIdentity()
+    glDisable(GL_DEPTH_TEST)
     glDisable(GL_CULL_FACE)
     glDisable(GL_LIGHTING)
+    glEnable(GL_TEXTURE_2D)
     glClear(GL_DEPTH_BUFFER_BIT)
     glEndList()
     
@@ -184,21 +187,30 @@ def draw_lego_brick(width, depth, size):
         glTranslatef(grid, 0.0, 0.0)
     glPopMatrix()
 
-def draw_ortho_layer(filename, x=0, y=0, width=SCREEN_WIDTH, height=SCREEN_HEIGHT):
+def draw_ortho_layer(filename, x=None, y=None, width=None, height=None):
+    global SCREEN_WIDTH, SCREEN_HEIGHT
+    
+    if x is None: x = 0 
+    if y is None: y = 0
+    if width is None: width = SCREEN_WIDTH
+    if height is None: height = SCREEN_HEIGHT
+    
     image = pygame.image.load(filename)
     imageData = pygame.image.tostring(image, "RGBA", 1)
     
-    glEnable(GL_TEXTURE_2D)
     texture = glGenTextures(1)
     
     glBindTexture(GL_TEXTURE_2D, texture)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image.get_width(), image.get_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, imageData)
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image.get_width(), image.get_height(), 0, GL_RGBA, GL_UNSIGNED_BYTE, imageData)
+    
+    glBindTexture(GL_TEXTURE_2D, texture)
     glBegin(GL_QUADS)
-    glTexCoord2f(0.0, 0.0); glVertex2i(x,y)
-    glTexCoord2f(0.0, 1.0); glVertex2i(x,height)
-    glTexCoord2f(1.0, 1.0); glVertex2i(width,height)
-    glTexCoord2f(1.0, 0.0); glVertex2i(width,y)
+    glTexCoord2f(0.0, 1.0); glVertex2i(x,y)
+    glTexCoord2f(0.0, 0.0); glVertex2i(x,height)
+    glTexCoord2f(1.0, 0.0); glVertex2i(width,height)
+    glTexCoord2f(1.0, 1.0); glVertex2i(width,y)
     glEnd()
+    #glDeleteTextures(texture)
     
