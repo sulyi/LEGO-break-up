@@ -177,21 +177,21 @@ def draw_lego_brick(width, depth, size):
         glTranslatef(grid, 0.0, 0.0)
     glPopMatrix()
 
-def draw_ortho_layer(filename, x=None, y=None, width=None, height=None):
+def draw_ortho_layer(imageData, width, height, x=None, y=None):
     global SCREEN_WIDTH, SCREEN_HEIGHT
     if x is None: x = 0 
     if y is None: y = 0
-    if width is None: width = SCREEN_WIDTH
-    if height is None: height = SCREEN_HEIGHT
-    image = pygame.image.load(filename)
-    imageData = pygame.image.tostring(image, "RGBA", 1)
     
     texture = glGenTextures(1)
     
     glBindTexture(GL_TEXTURE_2D, texture)
+    
+    glPixelStorei(GL_UNPACK_ALIGNMENT,1)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image.get_width(), image.get_height(), 0, GL_RGBA, GL_UNSIGNED_BYTE, imageData)
+    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_REPEAT);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, imageData)
     
     glBindTexture(GL_TEXTURE_2D, texture)
     glBegin(GL_QUADS)
@@ -200,5 +200,5 @@ def draw_ortho_layer(filename, x=None, y=None, width=None, height=None):
     glTexCoord2f(1.0, 0.0); glVertex2i(width,height)
     glTexCoord2f(1.0, 1.0); glVertex2i(width,y)
     glEnd()
-    #glDeleteTextures(texture)
+    glDeleteTextures(texture)
     

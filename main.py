@@ -29,6 +29,9 @@ if __name__ == '__main__':
     
     ticker = pygame.time.Clock()
     
+    image = pygame.image.load(os.path.join('data','ui.png'))
+    imageData = pygame.image.tostring(image, "RGBA", 1)
+    
     rot_speed = 3
     running = True
     while running:
@@ -55,7 +58,7 @@ if __name__ == '__main__':
         glLoadIdentity()
         glCallList(lego.L_DRAW_2D)
         
-        lego.draw_ortho_layer(os.path.join('data','ui.png'))
+        lego.draw_ortho_layer(imageData, image.get_width(), image.get_height())
         
         #glMatrixMode(GL_PROJECTION)
         #glPopMatrix()
