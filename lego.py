@@ -3,11 +3,8 @@ Created on 2013.04.03.
 
 @author: arsene
 '''
-
 from OpenGL.GL import *
 from OpenGL.GLU import *
-import pygame
-from OpenGL.raw.GL import glTexCoord2i, glVertex2d
 
 LEGO_SMALL_HEIGHT=0.32
 LEGO_BIG_HEIGHT=0.96
@@ -189,16 +186,16 @@ def draw_ortho_layer(imageData, width, height, x=None, y=None):
     glPixelStorei(GL_UNPACK_ALIGNMENT,1)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
-    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_REPEAT)
+    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_REPEAT)
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, imageData)
     
     glBindTexture(GL_TEXTURE_2D, texture)
     glBegin(GL_QUADS)
-    glTexCoord2f(0.0, 1.0); glVertex2i(x,y)
     glTexCoord2f(0.0, 0.0); glVertex2i(x,height)
     glTexCoord2f(1.0, 0.0); glVertex2i(width,height)
     glTexCoord2f(1.0, 1.0); glVertex2i(width,y)
+    glTexCoord2f(0.0, 1.0); glVertex2i(x,y)
     glEnd()
     glDeleteTextures(texture)
     
