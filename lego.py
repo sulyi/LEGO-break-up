@@ -35,11 +35,9 @@ def gl_init(width, height):
     L_DRAW_3D = L_DRAW_2D + 1
 
     glClearColor(0.0, 0.2, 0.5, 1.0)
-
-   
-    
     glViewport(0,0,width,height)
-
+    glEnable(GL_ALPHA_TEST)
+    glAlphaFunc(GL_GREATER,0.1)
     quadratic = gluNewQuadric()
     
     gluQuadricDrawStyle(quadratic,GLU_FILL)    
@@ -93,7 +91,6 @@ def _caped_cylinder(radius,height,segments):
     glPopMatrix()
     
 def _five_face_box(width,height,depth):
-
     _width=width/2.0
     _height=height/2.0
     _depth=depth/2.0
@@ -165,20 +162,13 @@ def _five_face_box(width,height,depth):
     glEnd()                # Done Drawing The Cube
 
 def draw_lego_brick(width, depth, size):
-    
     glPushMatrix()
     _width=width*2*(LEGO_BUMP_RADIUS+LEGO_HALF_BUMP_DIST)
     _depth=depth*2*(LEGO_BUMP_RADIUS+LEGO_HALF_BUMP_DIST)
     _height=LEGO_BIG_HEIGHT if size else LEGO_SMALL_HEIGHT
-    
     _five_face_box(_width, _height, _depth)
-    
     grid=(LEGO_HALF_BUMP_DIST+LEGO_BUMP_RADIUS)*2
-    
-
-    
     glTranslatef(LEGO_BUMP_RADIUS+LEGO_HALF_BUMP_DIST-_width/2.0, LEGO_BUMP_HEIGHT/2.0, -LEGO_BUMP_RADIUS-LEGO_HALF_BUMP_DIST-_depth/2.0)
-    
     for _i in range(0, width):
         for _j in range(0, depth):
             glTranslatef(0.0, 0.0, grid)
@@ -189,12 +179,10 @@ def draw_lego_brick(width, depth, size):
 
 def draw_ortho_layer(filename, x=None, y=None, width=None, height=None):
     global SCREEN_WIDTH, SCREEN_HEIGHT
-    
     if x is None: x = 0 
     if y is None: y = 0
     if width is None: width = SCREEN_WIDTH
     if height is None: height = SCREEN_HEIGHT
-    
     image = pygame.image.load(filename)
     imageData = pygame.image.tostring(image, "RGBA", 1)
     
