@@ -83,12 +83,12 @@ if __name__ == '__main__':
         
         lego.draw_lego_brick( 3, 3, lego.LEGO_SMALL, (1.0, 0.1, 0.2) )
         
-        glPushMatrix()
+        #glPushMatrix()
         
-        glCallList(lego.L_DRAW_2D)
-        lego.draw_ortho_layer( *textures["ui"] )
+        #glCallList(lego.L_DRAW_2D)
+        #lego.draw_ortho_layer( *textures["ui"] )
         
-        glPopMatrix()
+        #glPopMatrix()
     
         pygame.display.flip()
         ticker.tick(40)
