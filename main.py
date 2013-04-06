@@ -41,9 +41,6 @@ if __name__ == '__main__':
     
     button = pygame.Rect(10,10, 50, 50)
     
-    glTranslatef(0.0,0.0,-6)
-    glRotatef(40, 1.0, 0.0, 0.0)
-    
     print "Loading textures ...",
     
     textures = dict()
@@ -60,7 +57,11 @@ if __name__ == '__main__':
     
     print "\nEntering drawing loop\n"
     
-    rot_speed = 0.1
+    glTranslatef(0.8,0.2,-6)
+    glRotatef(40, 1.0, 0.0, 0.0)
+    
+    
+    rot_speed = 1.5
     ticker = pygame.time.Clock()
     running = True
     while running:
@@ -77,26 +78,22 @@ if __name__ == '__main__':
         glCallList(lego.L_DRAW_3D)
         
         glRotatef(rot_speed, 0.0, 1.0, 0.0)
-        lego.draw_lego_brick(3, 5, lego.LEGO_SMALL)
         
-        glMatrixMode(GL_MODELVIEW)
+        glLightfv( GL_LIGHT0, GL_POSITION, (3.0, -1.5, 2.0, -1.0) ) 
+        
+        lego.draw_lego_brick( 3, 3, lego.LEGO_SMALL, (1.0, 0.1, 0.2) )
+        
         glPushMatrix()
         
-        glMatrixMode(GL_PROJECTION)
-        #glPushMatrix()
-        glLoadIdentity()
         glCallList(lego.L_DRAW_2D)
-        
-        
         lego.draw_ortho_layer( *textures["ui"] )
         
-        #glMatrixMode(GL_PROJECTION)
-        #glPopMatrix()
-        glMatrixMode(GL_MODELVIEW)
         glPopMatrix()
     
         pygame.display.flip()
         ticker.tick(40)
-        
+    
+    lego.finish()    
+    pygame.quit()    
     print "Bye!"
             
