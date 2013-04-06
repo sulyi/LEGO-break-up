@@ -16,6 +16,8 @@ LEGO_BUMP_RADIUS=0.25
 LEGO_BIG=True
 LEGO_SMALL=False
 
+LEGO_CAP_TEXTURE = None
+
 SCREEN_WIDTH = None 
 SCREEN_HEIGHT = None
 
@@ -23,7 +25,9 @@ L_DRAW_2D = None
 L_DRAW_3D = None
 
 def gl_init(width, height):
-    global quadratic,L_DRAW_2D,L_DRAW_3D, SCREEN_WIDTH, SCREEN_HEIGHT
+    global legocaptex,quadratic,L_DRAW_2D,L_DRAW_3D, SCREEN_WIDTH, SCREEN_HEIGHT,LEGO_CAP_TEXTURE
+    
+    legocaptex = load_2d_texture(LEGO_CAP_TEXTURE, 256, 256)
     
     SCREEN_WIDTH = width
     SCREEN_HEIGHT = height
@@ -33,10 +37,19 @@ def gl_init(width, height):
 
     glClearColor(0.0, 0.2, 0.5, 1.0)
     glViewport(0,0,width,height)
+    
+    glLightfv(GL_LIGHT0, GL_AMBIENT, (0.5, 0.5, 0.5, 1.0))        # Setup The Ambient Light
+    glLightfv(GL_LIGHT0, GL_DIFFUSE, (1.0, 1.0, 1.0, 1.0))        # Setup The Diffuse Light
+    glLightfv(GL_LIGHT0, GL_POSITION, (0.0, 0.0, 2.0, 1.0))    # Position The Light
+    glEnable(GL_LIGHT0)                    # Enable Light One
+    
+    glEnable(GL_TEXTURE_2D)
     glEnable(GL_ALPHA_TEST)
     glAlphaFunc(GL_GREATER,0.1)
+    
     quadratic = gluNewQuadric()
     
+    gluQuadricTexture(quadratic, GLU_TRUE)
     gluQuadricDrawStyle(quadratic,GLU_FILL)    
     gluQuadricOrientation(quadratic, GLU_OUTSIDE)
     gluQuadricNormals(quadratic, GLU_SMOOTH)
@@ -48,8 +61,7 @@ def gl_init(width, height):
     glMatrixMode(GL_MODELVIEW)
     
     glEnable(GL_DEPTH_TEST)
-    glDisable(GL_LIGHTING) # TODO: add lighting and enable it
-    glDisable(GL_TEXTURE_2D)
+    glEnable(GL_LIGHTING)
     glDisable(GL_CULL_FACE)
     
     glEndList()
@@ -61,14 +73,13 @@ def gl_init(width, height):
     glDisable(GL_DEPTH_TEST)
     glDisable(GL_CULL_FACE)
     glDisable(GL_LIGHTING)
-    glEnable(GL_TEXTURE_2D)
     glClear(GL_DEPTH_BUFFER_BIT)
     glEndList()
     
     glCallList(L_DRAW_3D)
     
 def _caped_cylinder(radius,height,segments):
-    global quadratic
+    global quadratic,legocaptex
     glPushMatrix()
     glRotatef(-90, 1.0, 0.0, 0.0)
     glTranslatef(0.0, 0.0, -height/2.0)
@@ -80,26 +91,33 @@ def _caped_cylinder(radius,height,segments):
     
     glColor3f(1.0, 1.0 , 1.0)
     gluCylinder(quadratic,radius,radius,height,segments,segments)
-        
+    
     glColor3f(1.0, 1.0 , 0.0)
     glTranslatef(0.0,0.0,height)
     
+    glBindTexture(GL_TEXTURE_2D, legocaptex)
     gluDisk(quadratic,0,radius,segments,1)
+    glBindTexture(GL_TEXTURE_2D, 0)
+    
     glPopMatrix()
     
 def _five_face_box(width,height,depth):
+    global legocaptex
     _width=width/2.0
     _height=height/2.0
     _depth=depth/2.0
     
+    
     glColor3f(0.0, 0.8 , 0.8)
+    
+    glBindTexture(GL_TEXTURE_2D,0)
     glBegin(GL_QUADS)                # Start Drawing The Cube
 
     # Front Face
-    glVertex3f(-_width, -_height,  _depth)
-    glVertex3f( _width, -_height,  _depth)
-    glVertex3f( _width,  _height,  _depth)
-    glVertex3f(-_width,  _height,  _depth)
+    glTexCoord2f(0.0, 1.0); glVertex3f(-_width, -_height,  _depth)
+    glTexCoord2f(1.0, 1.0); glVertex3f( _width, -_height,  _depth)
+    glTexCoord2f(1.0, 0.0); glVertex3f( _width,  _height,  _depth)
+    glTexCoord2f(0.0, 0.0); glVertex3f(-_width,  _height,  _depth)
 
     glEnd()
 
@@ -157,14 +175,14 @@ def _five_face_box(width,height,depth):
     glVertex3f(-_width,  _height, -_depth)
     
     glEnd()                # Done Drawing The Cube
-
+    
 def draw_lego_brick(width, depth, size):
     glPushMatrix()
     _width=width*2*(LEGO_BUMP_RADIUS+LEGO_HALF_BUMP_DIST)
     _depth=depth*2*(LEGO_BUMP_RADIUS+LEGO_HALF_BUMP_DIST)
     _height=LEGO_BIG_HEIGHT if size else LEGO_SMALL_HEIGHT
     _five_face_box(_width, _height, _depth)
-    grid=(LEGO_HALF_BUMP_DIST+LEGO_BUMP_RADIUS)*2
+    grid=2*(LEGO_BUMP_RADIUS+LEGO_HALF_BUMP_DIST)
     glTranslatef(LEGO_BUMP_RADIUS+LEGO_HALF_BUMP_DIST-_width/2.0, LEGO_BUMP_HEIGHT/2.0, -LEGO_BUMP_RADIUS-LEGO_HALF_BUMP_DIST-_depth/2.0)
     for _i in range(0, width):
         for _j in range(0, depth):
@@ -174,10 +192,7 @@ def draw_lego_brick(width, depth, size):
         glTranslatef(grid, 0.0, 0.0)
     glPopMatrix()
 
-def draw_ortho_layer(imageData, width, height, x=None, y=None):
-    global SCREEN_WIDTH, SCREEN_HEIGHT
-    if x is None: x = 0 
-    if y is None: y = 0
+def load_2d_texture(imageData, width, height):
     
     texture = glGenTextures(1)
     
@@ -188,14 +203,23 @@ def draw_ortho_layer(imageData, width, height, x=None, y=None):
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
     glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_REPEAT)
     glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_REPEAT)
+    # FIXME: power of 2
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, imageData)
+    return texture
     
+def draw_ortho_layer(texture, x=None, y=None, width=None, height=None):
+    global SCREEN_WIDTH, SCREEN_HEIGHT
+    if x is None: x = 0 
+    if y is None: y = 0
+    if width is None: width = SCREEN_WIDTH - x
+    if height is None: height = SCREEN_HEIGHT - y
+        
     glBindTexture(GL_TEXTURE_2D, texture)
     glBegin(GL_QUADS)
+    glTexCoord2f(0.0, 1.0); glVertex2i(x,y)
     glTexCoord2f(0.0, 0.0); glVertex2i(x,height)
     glTexCoord2f(1.0, 0.0); glVertex2i(width,height)
-    glTexCoord2f(1.0, 1.0); glVertex2i(width,y)
-    glTexCoord2f(0.0, 1.0); glVertex2i(x,y)
+    glTexCoord2f(1.0, 1.0); glVertex2i(width,y)    
     glEnd()
-    glDeleteTextures(texture)
+    #glDeleteTextures(texture)
     
