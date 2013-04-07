@@ -1,3 +1,5 @@
+
+# coding=utf-8
 '''
 Created on 2013.04.03.
 
@@ -15,17 +17,32 @@ import lego
 
 
 if __name__ == '__main__':
-          
+    
+    po = {"width" : "Szélesség",
+          "height" : "Magasság",
+          "depth" : "Mélység"  
+          }
+    
+    for i in po:
+        try:
+            po[i] = po[i].encode('Latin1')
+        except UnicodeError as e:
+            print "%s key in the dictionary cannot be converted ( value : %s ) " % (i, po[i])
+            print e
+
+    
     print "Initializing pygame ..." ,
     pygame.init()
+    print
     print "Done"
+    
     print "Creating screen ...",
     screen = pygame.display.set_mode ((800,600), pygame.OPENGL|pygame.DOUBLEBUF, 24)
     print "Done"
-    print "Initializing opengl ...",
     
+    print "Initializing opengl ...",
     image = pygame.image.load(os.path.join('data','legocap.png'))
-    imageData = pygame.image.tostring(image, "RGBA", 1)
+    imageData = pygame.image.tostring(image, "RGBA", True)
     
     width = image.get_width()
     height = image.get_height()
@@ -46,13 +63,34 @@ if __name__ == '__main__':
     textures = dict()
     
     image = pygame.image.load(os.path.join('data','ui.png'))
-    imageData = pygame.image.tostring(image, "RGBA", 1)
+    imageData = pygame.image.tostring(image, "RGBA", True)
     
     width = image.get_width()
     height = image.get_height()
     
-    textures["ui"] =  ( lego.load_2d_texture(imageData, width , height), 0, 0, width, height )
-     
+    textures["ui"] =  ( lego.load_2d_texture(imageData, width , height), (1.0, 1.0, 1.0), 0, 0, width, height )
+    
+    font = pygame.font.SysFont("courier", 32)
+    valami = font.render( po["width"], True, (255, 255, 255) )
+    
+    textures["widthtext"] = ( lego.load_2d_texture( pygame.image.tostring(valami, 'RGBA', True), 
+                                                 valami.get_width(), valami.get_height() ),   
+                           (0.6, 0.3, 0.7), 20, 20, 190, 90 )
+    
+    font = pygame.font.SysFont("courier", 32)
+    valami = font.render( po["depth"], True, (255, 255, 255) )
+    
+    textures["depthtext"] = ( lego.load_2d_texture( pygame.image.tostring(valami, 'RGBA', True), 
+                                                 valami.get_width(), valami.get_height() ),   
+                           (0.6, 0.3, 0.7), 20, 235, 190, 305 )
+    
+#    font = pygame.font.SysFont("courier", 32)
+#    valami = font.render( po["height"], True, (255, 255, 255) )
+#    
+#    textures["heighttext"] = ( lego.load_2d_texture( pygame.image.tostring(valami, 'RGBA', True), 
+#                                                 valami.get_width(), valami.get_height() ),   
+#                           (0.6, 0.3, 0.7), 20, 20, 190, 90 )  
+    
     print "Done"
     
     print "\nEntering drawing loop\n"
@@ -83,10 +121,23 @@ if __name__ == '__main__':
         
         lego.draw_lego_brick( 3, 3, lego.LEGO_SMALL, (1.0, 0.1, 0.2) )
         
+        glRectf
+        
         glPushMatrix()
         
         glCallList(lego.L_DRAW_2D)
+        
         lego.draw_ortho_layer( *textures["ui"] )
+        
+        lego.draw_ortho_layer( *textures["widthtext"])
+        glColor3f(0.8, 0.8, 0.0)
+        glBindTexture(GL_TEXTURE_2D, 0)
+        glRecti(60,115,160,215)
+        
+        lego.draw_ortho_layer( *textures["depthtext"])
+        glColor3f(0.8, 0.8, 0.0)
+        glBindTexture(GL_TEXTURE_2D, 0)
+        glRecti(60,330,160,430)
         
         glPopMatrix()
     

@@ -26,7 +26,10 @@ L_DRAW_2D = None
 L_DRAW_3D = None
 
 def gl_init(width, height):
-    global legocaptex,quadratic,L_DRAW_2D,L_DRAW_3D, SCREEN_WIDTH, SCREEN_HEIGHT,LEGO_CAP_TEXTURE
+    global legocaptex,quadratic, \
+           L_DRAW_2D,L_DRAW_3D,  \
+           SCREEN_WIDTH, SCREEN_HEIGHT, \
+           LEGO_CAP_TEXTURE
     
     legocaptex = load_2d_texture(LEGO_CAP_TEXTURE, 256, 256)
     
@@ -85,7 +88,6 @@ def gl_init(width, height):
     glClear(GL_DEPTH_BUFFER_BIT)
     
     #glDisable(GL_COLOR_MATERIAL)
-    glColor3f(1.0, 1.0, 1.0)
     glDisable(GL_DEPTH_TEST)
     glDisable(GL_LIGHTING)
     
@@ -229,13 +231,11 @@ def load_2d_texture(imageData, width, height):
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, imageData)
     return texture
     
-def draw_ortho_layer(texture, x=None, y=None, width=None, height=None):
+def draw_ortho_layer(texture, color = (1.0, 1.0, 1.0), x=0, y=0, width=None, height=None):
     global SCREEN_WIDTH, SCREEN_HEIGHT
-    if x is None: x = 0 
-    if y is None: y = 0
     if width is None: width = SCREEN_WIDTH - x
     if height is None: height = SCREEN_HEIGHT - y
-    
+    glColor3fv(color)
     glBindTexture(GL_TEXTURE_2D, texture)
     glBegin(GL_QUADS)
     glTexCoord2f(0.0, 1.0); glVertex2i(x,y)
