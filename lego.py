@@ -5,7 +5,6 @@ Created on 2013.04.03.
 '''
 from OpenGL.GL import *
 from OpenGL.GLU import *
-from scipy.odr.models import quadratic
 
 LEGO_SMALL_HEIGHT=0.32
 LEGO_BIG_HEIGHT=0.96
@@ -199,20 +198,20 @@ def _five_face_box(width,height,depth, color):
     
     glEnd()                # Done Drawing The Cube
     
-def draw_lego_brick(width, depth, size, color):
+def draw_lego_brick(width, length, height, color):
 
     _width=width*2*(LEGO_BUMP_RADIUS+LEGO_HALF_BUMP_DIST)
-    _depth=depth*2*(LEGO_BUMP_RADIUS+LEGO_HALF_BUMP_DIST)
-    _height=LEGO_BIG_HEIGHT if size else LEGO_SMALL_HEIGHT
+    _depth=length*2*(LEGO_BUMP_RADIUS+LEGO_HALF_BUMP_DIST)
+    _height=LEGO_BIG_HEIGHT if height else LEGO_SMALL_HEIGHT
     _five_face_box(_width, _height, _depth, color)
     glPushMatrix()
     grid=2*(LEGO_BUMP_RADIUS+LEGO_HALF_BUMP_DIST)
     glTranslatef(LEGO_BUMP_RADIUS+LEGO_HALF_BUMP_DIST-_width/2.0, LEGO_BUMP_HEIGHT/2.0, -LEGO_BUMP_RADIUS-LEGO_HALF_BUMP_DIST-_depth/2.0)
     for _i in range(0, width):
-        for _j in range(0, depth):
+        for _j in range(0, length):
             glTranslatef(0.0, 0.0, grid)
             _caped_cylinder(LEGO_BUMP_RADIUS, _height+LEGO_BUMP_HEIGHT, color, 32)
-        glTranslatef(0.0, 0.0, -depth*grid)
+        glTranslatef(0.0, 0.0, -length*grid)
         glTranslatef(grid, 0.0, 0.0)
     glPopMatrix()
 

@@ -15,11 +15,11 @@ from OpenGL.GLU import *
 import lego
 
 class button(pygame.Rect):
-    def __init__( self, name, x, y, width, height, color, focus_color ):
-        self.name = name
+    def __init__(self, x, y, width, height, color, focus_color, value ):
         super(button, self ).__init__( x, y, width, height )
         self.color = color
         self.focus_color = focus_color
+        self.value = value
         
     def draw( self, focused = False ):
         glColor3fv( self.color if not focused else self.focus_color)
@@ -30,7 +30,12 @@ class button(pygame.Rect):
         return self.contains(pygame.Rect( point, (0,0) ))
 
 if __name__ == '__main__':
-
+    
+    
+    initial_brick_width = 2
+    initial_brick_length = 3
+    initial_brick_height = lego.LEGO_BIG
+    
     print "Initializing locale ...",
     gettext.install('default', os.path.join('.','locale'))
     po = {"width":  _("Width"), "depth" :  _("Length"), "height" : _("Height") }
@@ -62,8 +67,11 @@ if __name__ == '__main__':
     
     # draw dialog screen 
     
-    buttons = { button( "widthbutton", 60,115, 100,100, (0.8, 0.8, 0.0), (0.3, 0.8, 0.5) ),
-                button( "depthbutton", 60,330, 100,100, (0.8, 0.8, 0.0), (0.3, 0.8, 0.5) )
+    # FIXME: actually this is a terrible choice (slow data access)
+    
+    buttons = {
+                "width_btn"  : button( 60,115, 100,100, (0.8, 0.8, 0.0), (0.3, 0.8, 0.5), initial_brick_width ),
+                "length_btn" : button( 60,330, 100,100, (0.8, 0.8, 0.0), (0.3, 0.8, 0.5) , initial_brick_length ),
                }
                   
     print "Loading textures ...",
@@ -76,10 +84,14 @@ if __name__ == '__main__':
     width = image.get_width()
     height = image.get_height()
     
+    # TODO: textured Rect 
+    
     textures["ui"] =  ( lego.load_2d_texture(imageData, width , height),
                         (1.0, 1.0, 1.0), 0, 0, width, height )
     
     font = pygame.font.SysFont("courier", 32, True, True)
+    
+    # TODO: text renderer
     
     text_shadow = font.render( po["width"], True, (192, 64, 128) )
     text = font.render( po["width"], True, (153, 76, 178) )
@@ -117,15 +129,28 @@ if __name__ == '__main__':
     ticker = pygame.time.Clock()
     running = True
     focused = None
-    hit = None
+    mouse_hit = None
+    key_hit = None
     while running:
         for event in pygame.event.get():
-            if event.type == pygame.QUIT or event.type == pygame.KEYUP:
+            if event.type == pygame.QUIT:
                 running = False
-            if event.type == pygame.MOUSEBUTTONUP:
-                hit = event.pos
+            elif event.type == pygame.KEYDOWN:
+                if event.key == 27 or ( event.mod == 64 and (event.key == 113 or event.key == 100 or event.key == 120) ):
+                    running=False
+                else:
+                    try:
+                        key_hit = int (event.unicode)
+                    except ValueError:
+                        pass
+                    
+                     
+            elif event.type == pygame.MOUSEBUTTONUP and event.button == 1:
+                mouse_hit = event.pos
         
         glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT)
+        
+        # drav 3D stuff
         
         glCallList(lego.L_DRAW_3D)
         
@@ -133,28 +158,31 @@ if __name__ == '__main__':
         
         glLightfv( GL_LIGHT0, GL_POSITION, (3.0, -1.5, 2.0, -1.0) ) 
         
-        lego.draw_lego_brick( 3, 3, lego.LEGO_SMALL, (1.0, 0.1, 0.2) )
+        # TODO: add height_btn, change height argument
+        lego.draw_lego_brick( buttons["width_btn"].value, buttons["length_btn"].value, initial_brick_height , (1.0, 0.1, 0.2) )
         
-        glRectf
+        # drav 2D stuff
         
         glPushMatrix()
-        
         glCallList(lego.L_DRAW_2D)
         
         lego.draw_ortho_layer( *textures["ui"] )
-        
         lego.draw_ortho_layer( *textures["widthtext"])
         lego.draw_ortho_layer( *textures["depthtext"])
         
-        for b in  buttons:
+        for b in  buttons.values():
             b.draw( b is focused )
-            if hit and b.is_hit_by(hit):
+            if mouse_hit and b.is_hit_by(mouse_hit):
                 focused = b
-                hit = None
-        if hit is not None:
-            hit = None
+                mouse_hit = None
+            if key_hit is not None and b is focused:
+                b.value = key_hit
+                
+        if mouse_hit is not None:
+            mouse_hit = None
             focused = None
-            
+        
+        key_hit = None
         
         glPopMatrix()
     
