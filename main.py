@@ -89,7 +89,7 @@ if __name__ == '__main__':
     textures["ui"] =  ( lego.load_2d_texture(imageData, width , height),
                         (1.0, 1.0, 1.0), 0, 0, width, height )
     
-    font = pygame.font.SysFont("arial", 32, True, True)
+    font = pygame.font.SysFont("courier", 32, True, True)
     
     # TODO: text renderer
     
@@ -124,6 +124,7 @@ if __name__ == '__main__':
     glTranslatef(0.8,0.2,-6)
     glRotatef(40, 1.0, 0.0, 0.0)
     
+    
     rot_speed = 1.5
     ticker = pygame.time.Clock()
     running = True
@@ -136,7 +137,7 @@ if __name__ == '__main__':
                 running = False
             elif event.type == pygame.KEYDOWN:
                 if event.key == 27 or ( event.mod == 64 and (event.key == 113 or event.key == 100 or event.key == 120) ):
-                    running = False
+                    running=False
                 else:
                     try:
                         key_hit = int (event.unicode)
