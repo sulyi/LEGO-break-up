@@ -1,17 +1,17 @@
 ﻿   LEGO break up - a 3D puzzle game	
 ======================================
 
-	 ________________
-	|\   O       O   \
-	| \               \
-	|  \   O       O   \
-	|   \_______________\
-	|   |               |
-	|   |               | 
-	\   |               |
-	 \  |               |
-	  \ |               |
-	   \|_______________|
+	 ________________________________           ________________________________
+	|\   O       O       O       O   \         |\   O       O       O       O   \
+	| \                               \        | \                               \
+	|  \   O       O       O       O   \       |  \   O       O       O       O   \
+	|   \_______________________________\      |   \_______________________________\
+	|   ||                              |      |   ||                              |
+	|   ||                              |      |   ||                              |
+	\   ||                              |      \   ||                              |
+	 \  ||                              |       \  ||                              |
+	  \ ||                              |        \ ||                              |
+	   \||______________________________|         \||______________________________|
 
 
 
@@ -31,7 +31,7 @@ Check it out, later.
 
    1. You'll need Python 2.7
 
-   2. Some python packages: pygame, scipy (aka numpy), pyOpenGL, pyOpenGL_accelerate
+   2. Some python packages: pygame, scipy and/or numpy and pyOpenGL
 
    3. That's all, you'd be able to run main.py
 
