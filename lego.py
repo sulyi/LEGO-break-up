@@ -233,7 +233,7 @@ def load_2d_texture(imageData, width, height):
 def draw_ortho_layer(texture, color = (1.0, 1.0, 1.0), x=0, y=0, width=None, height=None):
     global SCREEN_WIDTH, SCREEN_HEIGHT
     if width is None: width = SCREEN_WIDTH - x
-    if height is None: height = SCREEN_HEIGHT - y
+    if height is None: height = SCREEN_HEIGHT - y    
     glColor3fv(color)
     glBindTexture(GL_TEXTURE_2D, texture)
     glBegin(GL_QUADS)
