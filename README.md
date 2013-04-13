@@ -22,7 +22,7 @@
 
    Game flow is not clear yet. There might be several levels where you'd disassemble a cube or some other way arranged LEGO bricks into pieces. Or could be that you'll be challenged to build a figure from given pieces.
 
-   Still the # graphical engine # and some # data structures # are under development.
+   Still the graphical engine and some data structures are under development.
 
 Check it out, later.
 

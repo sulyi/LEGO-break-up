@@ -3,8 +3,14 @@ Created on 2013.04.03.
 
 @author: arsene
 '''
-from OpenGL.GL import *
-from OpenGL.GLU import *
+import OpenGL.GL as GL
+import OpenGL.GLU as GLU
+
+try:
+    from lego_constants import *
+except ImportError:
+    print "Please run lego_configure.py"
+    raise
 
 LEGO_SMALL_HEIGHT=0.32
 LEGO_BIG_HEIGHT=0.96
@@ -15,8 +21,6 @@ LEGO_BUMP_RADIUS=0.25
 
 LEGO_BIG=True
 LEGO_SMALL=False
-
-LEGO_CAP_TEXTURE = None
 
 SCREEN_WIDTH = None 
 SCREEN_HEIGHT = None
@@ -35,92 +39,92 @@ def gl_init(width, height):
     SCREEN_WIDTH = width
     SCREEN_HEIGHT = height
    
-    quadratic = gluNewQuadric()
+    quadratic = GLU.gluNewQuadric()
     
-    gluQuadricTexture(quadratic, GLU_TRUE)
-    gluQuadricDrawStyle(quadratic,GLU_FILL)    
-    gluQuadricOrientation(quadratic, GLU_OUTSIDE)
-    gluQuadricNormals(quadratic, GLU_SMOOTH)
+    GLU.gluQuadricTexture(quadratic, GLU.GLU_TRUE)
+    GLU.gluQuadricDrawStyle(quadratic,GLU.GLU_FILL)    
+    GLU.gluQuadricOrientation(quadratic, GLU.GLU_OUTSIDE)
+    GLU.gluQuadricNormals(quadratic, GLU.GLU_SMOOTH)
     
-    glLightfv(GL_LIGHT0, GL_AMBIENT, (0.1, 0.1, 0.1, 1.0))        # Setup The Ambient Light
-    glLightfv(GL_LIGHT0, GL_DIFFUSE, (0.8, 0.8, 0.8, 1.0))        # Setup The Diffuse Light
-    glEnable(GL_LIGHT0)                                           # Enable Light One
+    GL.glLightfv(GL.GL_LIGHT0, GL.GL_AMBIENT, (0.1, 0.1, 0.1, 1.0))        # Setup The Ambient Light
+    GL.glLightfv(GL.GL_LIGHT0, GL.GL_DIFFUSE, (0.8, 0.8, 0.8, 1.0))        # Setup The Diffuse Light
+    GL.glEnable(GL.GL_LIGHT0)                                           # Enable Light One
     
-    glClearColor(0.0, 0.2, 0.5, 1.0)
-    glViewport(0,0,800,600)
+    GL.glClearColor(0.0, 0.2, 0.5, 1.0)
+    GL.glViewport(0,0,800,600)
     
-    glEnable(GL_TEXTURE_2D)
-    glEnable(GL_ALPHA_TEST)
-    glAlphaFunc(GL_GREATER,0.1)
-    glDisable(GL_CULL_FACE)
-    glEnable(GL_COLOR_MATERIAL)
+    GL.glEnable(GL.GL_TEXTURE_2D)
+    GL.glEnable(GL.GL_ALPHA_TEST)
+    GL.glAlphaFunc(GL.GL_GREATER,0.1)
+    GL.glDisable(GL.GL_CULL_FACE)
+    GL.glEnable(GL.GL_COLOR_MATERIAL)
     
-    L_DRAW_2D = glGenLists(2)
+    L_DRAW_2D = GL.glGenLists(2)
     L_DRAW_3D = L_DRAW_2D + 1
     
     # L_DRAW_3D list
     
-    glNewList(L_DRAW_3D,GL_COMPILE)
-    glMatrixMode(GL_PROJECTION)
-    glLoadIdentity()
-    gluPerspective(45.0, float(800)/float(600), 0.1, 100.0)
+    GL.glNewList(L_DRAW_3D,GL.GL_COMPILE)
+    GL.glMatrixMode(GL.GL_PROJECTION)
+    GL.glLoadIdentity()
+    GLU.gluPerspective(45.0, float(800)/float(600), 0.1, 100.0)
 #    gluLookAt(0.0, 0.0, -6.0,
 #              0.0, 0.0, 0.0,
 #              0.0, 0.0, 1.0
 #              )
-    glMatrixMode(GL_MODELVIEW)
+    GL.glMatrixMode(GL.GL_MODELVIEW)
     
     #glEnable(GL_COLOR_MATERIAL)
-    glEnable(GL_DEPTH_TEST)
-    glEnable(GL_LIGHTING)
+    GL.glEnable(GL.GL_DEPTH_TEST)
+    GL.glEnable(GL.GL_LIGHTING)
     
-    glEndList()
+    GL.glEndList()
     
     # L_DRAW_2D list
     
-    glNewList(L_DRAW_2D, GL_COMPILE)
-    glMatrixMode(GL_PROJECTION)
-    glLoadIdentity()
-    glOrtho(0.0, width, height, 0.0, -1.0, 10.0)
-    glMatrixMode(GL_MODELVIEW)
-    glLoadIdentity()
-    glClear(GL_DEPTH_BUFFER_BIT)
+    GL.glNewList(L_DRAW_2D, GL.GL_COMPILE)
+    GL.glMatrixMode(GL.GL_PROJECTION)
+    GL.glLoadIdentity()
+    GL.glOrtho(0.0, width, height, 0.0, -1.0, 10.0)
+    GL.glMatrixMode(GL.GL_MODELVIEW)
+    GL.glLoadIdentity()
+    GL.glClear(GL.GL_DEPTH_BUFFER_BIT)
     
     #glDisable(GL_COLOR_MATERIAL)
-    glDisable(GL_DEPTH_TEST)
-    glDisable(GL_LIGHTING)
+    GL.glDisable(GL.GL_DEPTH_TEST)
+    GL.glDisable(GL.GL_LIGHTING)
     
-    glEndList()
+    GL.glEndList()
     
-    glCallList(L_DRAW_3D)
+    GL.glCallList(L_DRAW_3D)
     
 def finish():
     global quadratic
-    gluDeleteQuadric(quadratic)
+    GLU.gluDeleteQuadric(quadratic)
     
 def _caped_cylinder(radius,height,color,segments):
     global quadratic,legocaptex
-    glPushMatrix()
+    GL.glPushMatrix()
     
-    glRotatef(-90, 1.0, 0.0, 0.0)
-    glTranslatef(0.0, 0.0, -height/2.0)
+    GL.glRotatef(-90, 1.0, 0.0, 0.0)
+    GL.glTranslatef(0.0, 0.0, -height/2.0)
     
 #    glColor3f(1.0, 0.0 , 1.0)
 #    gluQuadricOrientation(quadratic, GLU_INSIDE)
 #    gluDisk(quadratic,0,radius,segments,1)
 #    gluQuadricOrientation(quadratic, GLU_OUTSIDE)
     
-    glColor3fv(color)
-    glBindTexture(GL_TEXTURE_2D, 0)
-    gluCylinder(quadratic,radius,radius,height,segments,segments)
+    GL.glColor3fv(color)
+    GL.glBindTexture(GL.GL_TEXTURE_2D, 0)
+    GLU.gluCylinder(quadratic,radius,radius,height,segments,segments)
     
-    glTranslatef(0.0,0.0,height)
+    GL.glTranslatef(0.0,0.0,height)
     
-    glBindTexture(GL_TEXTURE_2D, legocaptex)
-    gluDisk(quadratic,0,radius,segments,1)
-    glBindTexture(GL_TEXTURE_2D, 0)
+    GL.glBindTexture(GL.GL_TEXTURE_2D, legocaptex)
+    GLU.gluDisk(quadratic,0,radius,segments,1)
+    GL.glBindTexture(GL.GL_TEXTURE_2D, 0)
     
-    glPopMatrix()
+    GL.glPopMatrix()
 
 def _five_face_box(width,height,depth, color):
     global legocaptex
@@ -128,75 +132,75 @@ def _five_face_box(width,height,depth, color):
     _height=height/2.0
     _depth=depth/2.0
     
-    glBindTexture(GL_TEXTURE_2D,0)
+    GL.glBindTexture(GL.GL_TEXTURE_2D,0)
     
-    glColor3fv(color)
-    glNormal3f(0.0, 0.0, 1.0)
-    glBegin(GL_QUADS)                # Start Drawing The Cube
+    GL.glColor3fv(color)
+    GL.glNormal3f(0.0, 0.0, 1.0)
+    GL.glBegin(GL.GL_QUADS)                # Start Drawing The Cube
 
     # Front Face
-    glTexCoord2f(0.0, 1.0); glVertex3f(-_width, -_height,  _depth)
-    glTexCoord2f(1.0, 1.0); glVertex3f( _width, -_height,  _depth)
-    glTexCoord2f(1.0, 0.0); glVertex3f( _width,  _height,  _depth)
-    glTexCoord2f(0.0, 0.0); glVertex3f(-_width,  _height,  _depth)
+    GL.glTexCoord2f(0.0, 1.0); GL.glVertex3f(-_width, -_height,  _depth)
+    GL.glTexCoord2f(1.0, 1.0); GL.glVertex3f( _width, -_height,  _depth)
+    GL.glTexCoord2f(1.0, 0.0); GL.glVertex3f( _width,  _height,  _depth)
+    GL.glTexCoord2f(0.0, 0.0); GL.glVertex3f(-_width,  _height,  _depth)
     # TODO: add texcoordinates to other faces
-    glEnd()
+    GL.glEnd()
 
-    glNormal3f(0.0, 0.0, -1.0)
-    glBegin(GL_QUADS)
+    GL.glNormal3f(0.0, 0.0, -1.0)
+    GL.glBegin(GL.GL_QUADS)
     
     # Back Face
-    glVertex3f(-_width, -_height, -_depth)
-    glVertex3f(-_width,  _height, -_depth)
-    glVertex3f( _width,  _height, -_depth)
-    glVertex3f( _width, -_height, -_depth)
+    GL.glVertex3f(-_width, -_height, -_depth)
+    GL.glVertex3f(-_width,  _height, -_depth)
+    GL.glVertex3f( _width,  _height, -_depth)
+    GL.glVertex3f( _width, -_height, -_depth)
     
-    glEnd()
+    GL.glEnd()
     
-    glNormal3f(0.0, 1.0, 0.0)
-    glBegin(GL_QUADS)
+    GL.glNormal3f(0.0, 1.0, 0.0)
+    GL.glBegin(GL.GL_QUADS)
 
     # Top Face
-    glVertex3f(-_width,  _height, -_depth)
-    glVertex3f(-_width,  _height,  _depth)
-    glVertex3f( _width,  _height,  _depth)
-    glVertex3f( _width,  _height, -_depth)
+    GL.glVertex3f(-_width,  _height, -_depth)
+    GL.glVertex3f(-_width,  _height,  _depth)
+    GL.glVertex3f( _width,  _height,  _depth)
+    GL.glVertex3f( _width,  _height, -_depth)
     
-    glEnd()
+    GL.glEnd()
     
-#    glColor3f(0.0, 0.0 , 0.0)
-#    glNormal3f(0.0, -1.0, 0.0)
-#    glBegin(GL_QUADS)
+#    GL.glColor3f(0.0, 0.0 , 0.0)
+#    GL.glNormal3f(0.0, -1.0, 0.0)
+#    GL.glBegin(GL.GL_QUADS)
 #
 #    # Bottom Face
-#    glVertex3f(-_width, -_height, -_depth)
-#    glVertex3f( _width, -_height, -_depth)
-#    glVertex3f( _width, -_height,  _depth)
-#    glVertex3f(-_width, -_height,  _depth)
+#    GL.glVertex3f(-_width, -_height, -_depth)
+#    GL.glVertex3f( _width, -_height, -_depth)
+#    GL.glVertex3f( _width, -_height,  _depth)
+#    GL.glVertex3f(-_width, -_height,  _depth)
 #
-#    glEnd()
+#    GL.glEnd()
     
-    glNormal3f(1.0, 0.0, 0.0)
-    glBegin(GL_QUADS)
+    GL.glNormal3f(1.0, 0.0, 0.0)
+    GL.glBegin(GL.GL_QUADS)
 
     # Right face
-    glVertex3f( _width, -_height, -_depth)
-    glVertex3f( _width,  _height, -_depth)
-    glVertex3f( _width,  _height,  _depth)
-    glVertex3f( _width, -_height,  _depth)
+    GL.glVertex3f( _width, -_height, -_depth)
+    GL.glVertex3f( _width,  _height, -_depth)
+    GL.glVertex3f( _width,  _height,  _depth)
+    GL.glVertex3f( _width, -_height,  _depth)
     
-    glEnd()
+    GL.glEnd()
     
-    glNormal3f(-1.0, 0.0, 0.0)
-    glBegin(GL_QUADS)
+    GL.glNormal3f(-1.0, 0.0, 0.0)
+    GL.glBegin(GL.GL_QUADS)
 
     # Left Face
-    glVertex3f(-_width, -_height, -_depth)
-    glVertex3f(-_width, -_height,  _depth)
-    glVertex3f(-_width,  _height,  _depth)
-    glVertex3f(-_width,  _height, -_depth)
+    GL.glVertex3f(-_width, -_height, -_depth)
+    GL.glVertex3f(-_width, -_height,  _depth)
+    GL.glVertex3f(-_width,  _height,  _depth)
+    GL.glVertex3f(-_width,  _height, -_depth)
     
-    glEnd()                # Done Drawing The Cube
+    GL.glEnd()                # Done Drawing The Cube
     
 def draw_lego_brick(width, length, height, color):
 
@@ -204,42 +208,42 @@ def draw_lego_brick(width, length, height, color):
     _depth=length*2*(LEGO_BUMP_RADIUS+LEGO_HALF_BUMP_DIST)
     _height=LEGO_BIG_HEIGHT if height else LEGO_SMALL_HEIGHT
     _five_face_box(_width, _height, _depth, color)
-    glPushMatrix()
+    GL.glPushMatrix()
     grid=2*(LEGO_BUMP_RADIUS+LEGO_HALF_BUMP_DIST)
-    glTranslatef(LEGO_BUMP_RADIUS+LEGO_HALF_BUMP_DIST-_width/2.0, LEGO_BUMP_HEIGHT/2.0, -LEGO_BUMP_RADIUS-LEGO_HALF_BUMP_DIST-_depth/2.0)
+    GL.glTranslatef(LEGO_BUMP_RADIUS+LEGO_HALF_BUMP_DIST-_width/2.0, LEGO_BUMP_HEIGHT/2.0, -LEGO_BUMP_RADIUS-LEGO_HALF_BUMP_DIST-_depth/2.0)
     for _i in range(0, width):
         for _j in range(0, length):
-            glTranslatef(0.0, 0.0, grid)
+            GL.glTranslatef(0.0, 0.0, grid)
             _caped_cylinder(LEGO_BUMP_RADIUS, _height+LEGO_BUMP_HEIGHT, color, 32)
-        glTranslatef(0.0, 0.0, -length*grid)
-        glTranslatef(grid, 0.0, 0.0)
-    glPopMatrix()
+        GL.glTranslatef(0.0, 0.0, -length*grid)
+        GL.glTranslatef(grid, 0.0, 0.0)
+    GL.glPopMatrix()
 
 def load_2d_texture(imageData, width, height):
     
-    texture = glGenTextures(1)
+    texture = GL.glGenTextures(1)
     
-    glBindTexture(GL_TEXTURE_2D, texture)
+    GL.glBindTexture(GL.GL_TEXTURE_2D, texture)
     
-    glPixelStorei(GL_UNPACK_ALIGNMENT,1)
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
-    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_REPEAT)
-    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_REPEAT)
+    GL.glPixelStorei(GL.GL_UNPACK_ALIGNMENT,1)
+    GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_LINEAR)
+    GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_LINEAR)
+    GL.glTexParameteri(GL.GL_TEXTURE_2D,GL.GL_TEXTURE_WRAP_S,GL.GL_REPEAT)
+    GL.glTexParameteri(GL.GL_TEXTURE_2D,GL.GL_TEXTURE_WRAP_T,GL.GL_REPEAT)
     # FIXME: power of 2
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, imageData)
+    GL.glTexImage2D(GL.GL_TEXTURE_2D, 0, GL.GL_RGBA, width, height, 0, GL.GL_RGBA, GL.GL_UNSIGNED_BYTE, imageData)
     return texture
     
 def draw_ortho_layer(texture, color = (1.0, 1.0, 1.0), x=0, y=0, width=None, height=None):
     global SCREEN_WIDTH, SCREEN_HEIGHT
     if width is None: width = SCREEN_WIDTH - x
     if height is None: height = SCREEN_HEIGHT - y
-    glColor3fv(color)
-    glBindTexture(GL_TEXTURE_2D, texture)
-    glBegin(GL_QUADS)
-    glTexCoord2f(0.0, 1.0); glVertex2i(x,y)
-    glTexCoord2f(0.0, 0.0); glVertex2i(x,height)
-    glTexCoord2f(1.0, 0.0); glVertex2i(width,height)
-    glTexCoord2f(1.0, 1.0); glVertex2i(width,y)    
-    glEnd()
+    GL.glColor3fv(color)
+    GL.glBindTexture(GL.GL_TEXTURE_2D, texture)
+    GL.glBegin(GL.GL_QUADS)
+    GL.glTexCoord2f(0.0, 1.0); GL.glVertex2i(x,y)
+    GL.glTexCoord2f(0.0, 0.0); GL.glVertex2i(x,height)
+    GL.glTexCoord2f(1.0, 0.0); GL.glVertex2i(width,height)
+    GL.glTexCoord2f(1.0, 1.0); GL.glVertex2i(width,y)    
+    GL.glEnd()
     
