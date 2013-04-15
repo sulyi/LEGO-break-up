@@ -115,7 +115,8 @@ if __name__ == '__main__':
     
     print "\nEntering drawing loop\n"
     
-    GL.glTranslatef(0.8,0.2,-6)
+    brick = lego.brick((3,2,-4,-2,-2,-2,3,2),lego.LEGO_BIG,(1.0, 0.1, 0.2),(-2,0,-2))
+    GL.glTranslatef(0.8,0.2,-15)
     GL.glRotatef(40, 1.0, 0.0, 0.0)
     
     
@@ -156,7 +157,8 @@ if __name__ == '__main__':
         GL.glLightfv( GL.GL_LIGHT0, GL.GL_POSITION, (3.0, -1.5, 2.0, -1.0) ) 
         
         # TODO: add height_btn, change height argument
-        lego.draw_lego_brick( width_btn.value, length_btn.value, initial_brick_height , (1.0, 0.1, 0.2) )
+        #lego.draw_lego_brick( width_btn.value, length_btn.value, initial_brick_height , (1.0, 0.1, 0.2) )
+        brick.draw()
         
         # draw 2D stuff
         
