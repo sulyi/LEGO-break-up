@@ -115,7 +115,7 @@ if __name__ == '__main__':
     
     print "\nEntering drawing loop\n"
     
-    brick = lego.brick((3,2,-4,-2,-2,-2,3,2),lego.LEGO_BIG,(1.0, 0.1, 0.2),(-2,0,-2))
+    brick = lego.brick((2,1,-1,1,2,-3,2,-1,-3,-2,-1,1,-3,1,2,2),lego.LEGO_BIG,(1.0, 0.1, 0.2))
     GL.glTranslatef(0.8,0.2,-15)
     GL.glRotatef(40, 1.0, 0.0, 0.0)
     

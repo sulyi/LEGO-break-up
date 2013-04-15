@@ -131,7 +131,7 @@ class brick(object):
             GL.glVertex3f(x[i]*grid, _height, z[i-1]*grid)
             GL.glEnd()
             normal = np.dot(normal, rot)
-        GL.glTranslatef(self.left*grid+grid/2.0, _height/2.0 , self.bottom*grid-grid/2.0)
+        GL.glTranslatef(self.left*grid+grid/2.0, (LEGO_BUMP_HEIGHT+_height)/2.0 , self.bottom*grid-grid/2.0)
         for i in range(self.left+1, self.right+1):
             for j in range(self.bottom+1, self.top+1):
                 GL.glTranslatef(0.0, 0.0, grid)
