@@ -9,8 +9,10 @@ import os,gettext
 
 try:
     import pygame
+    import pygame.locals
     
-    import OpenGL.GL as GL 
+    import OpenGL.GL as GL
+    import OpenGL_accelerate as GLA 
     #import OpenGL.GLU as GLU  
 except ImportError:
     with open('README.md', 'r') as markdown:
@@ -53,6 +55,7 @@ if __name__ == '__main__':
     
     print "Initializing screen ...",
     screen = pygame.display.set_mode ((800,600), pygame.OPENGL|pygame.DOUBLEBUF, 24)
+    
     print "Done"
     
     print "Initializing opengl ...",
@@ -116,7 +119,7 @@ if __name__ == '__main__':
     print "\nEntering drawing loop\n"
     
     brick = lego.brick((2,1,-1,1,2,-3,2,-1,-3,-2,-1,1,-3,1,2,2),lego.LEGO_BIG,(1.0, 0.1, 0.2))
-    GL.glTranslatef(0.8,0.2,-15)
+    GL.glTranslatef(2.0,0.2,-15)
     GL.glRotatef(40, 1.0, 0.0, 0.0)
     
     
@@ -127,14 +130,18 @@ if __name__ == '__main__':
     focused = None
     mouse_hit = None
     key_hit = None
+    motionblur = False
+    accumulate = False
+    fps = 30
+    
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
             elif event.type == pygame.KEYDOWN:
-                if event.key == 27 or ( event.mod == 64 and (event.key == 113 or event.key == 100 or event.key == 120) ):
+                if event.key == 27 or ( event.mod % 256 == 64 and (event.key == 113 or event.key == 100 or event.key == 120) ):
                     running=False
-                if event.mod == 0:
+                if event.mod % 256 == 0:
                     if event.key == 32:
                         rotating = not rotating
                     else:
@@ -145,16 +152,39 @@ if __name__ == '__main__':
             elif event.type == pygame.MOUSEBUTTONUP and event.button == 1:
                 mouse_hit = event.pos
         
-        GL.glClear(GL.GL_COLOR_BUFFER_BIT|GL.GL_DEPTH_BUFFER_BIT)
+        if motionblur:
+            if not accumulate:
+                pygame.display.flip()
+                GL.glClear(GL.GL_COLOR_BUFFER_BIT|GL.GL_DEPTH_BUFFER_BIT)
+            else:
+                m_blur_f = 0.4
+                GL.glAccum(GL.GL_ACCUM,m_blur_f)
+                GL.glAccum(GL.GL_RETURN, 1.0)
+                GL.glAccum(GL.GL_MULT,1.0 - m_blur_f)
+            accumulate = not accumulate
+            ticker.tick(2*fps)
+            if rotating:
+                GL.glRotatef(rot_speed, 0.0, 1.0, 0.0)
+        else:
+            pygame.display.flip()
+            GL.glClear(GL.GL_COLOR_BUFFER_BIT|GL.GL_DEPTH_BUFFER_BIT)
+            ticker.tick(fps)
+            if rotating:
+                GL.glRotatef(2*rot_speed, 0.0, 1.0, 0.0)
         
         # draw 3D stuff
         
         GL.glCallList(lego.L_DRAW_3D)
         
-        if rotating:
-            GL.glRotatef(rot_speed, 0.0, 1.0, 0.0)
+        GL.glLightfv( GL.GL_LIGHT0, GL.GL_POSITION, (3.0, -4.0, -4.0, -1.0) ) 
         
-        GL.glLightfv( GL.GL_LIGHT0, GL.GL_POSITION, (3.0, -1.5, 2.0, -1.0) ) 
+        ps = GL.glGetInteger(GL.GL_POINT_SIZE)
+        GL.glPointSize(10)
+        GL.glColor3f(1.0, 1.0, 0.5)
+        GL.glBegin(GL.GL_POINTS)
+        GL.glVertex3f(3.0, -4.0, -4.0)
+        GL.glEnd()
+        GL.glPointSize(ps)
         
         # TODO: add height_btn, change height argument
         #lego.draw_lego_brick( width_btn.value, length_btn.value, initial_brick_height , (1.0, 0.1, 0.2) )
@@ -183,12 +213,9 @@ if __name__ == '__main__':
         
         key_hit = None
         
+        
         GL.glPopMatrix()
-    
-        pygame.display.flip()
-        ticker.tick(40)
-    
+        
     lego.finish()    
-    pygame.quit()    
+    pygame.quit()
     print "Bye!"
-            

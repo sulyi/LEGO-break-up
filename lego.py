@@ -5,6 +5,7 @@ Created on 2013.04.03.
 '''
 import OpenGL.GL as GL
 import OpenGL.GLU as GLU
+
 import numpy as np
 
 try:
@@ -38,12 +39,23 @@ class brick(object):
         self.sides = sides
         self.color = color
         self.size = size
+        _combine = lambda _points, _vertices, _weights: _points 
+            
         
+        self.tess = GLU.gluNewTess()
+        GLU.gluTessNormal(self.tess, 0.0,1.0,0.0)
+        GLU.gluTessCallback(self.tess, GLU.GLU_TESS_BEGIN, GL.glBegin)
+        GLU.gluTessCallback(self.tess,GLU.GLU_TESS_VERTEX,GL.glVertex3fv)
+        GLU.gluTessCallback(self.tess,GLU.GLU_TESS_COMBINE,_combine)
+        GLU.gluTessCallback(self.tess, GLU.GLU_TESS_END, GL.glEnd)
+        GLU.gluTessProperty(self.tess, GLU.GLU_TESS_WINDING_RULE, GLU.GLU_TESS_WINDING_ODD)
         if position is not None:
             self.position = position
         else:
             self.position = (0,0,0)
-            
+    def __del__(self):
+        GLU.gluDeleteTess(self.tess)
+                
     @property
     def sides(self):
         return self._sides
@@ -108,12 +120,31 @@ class brick(object):
         _length = self.bottom - self.top
         x = self._coordinates[0]
         z = self._coordinates[1]
-        normal = np.array([-1.0, 0.0, 0.0])
-        rot = np.array([[0.0, 0.0, 1.0],[0.0, 1.0, 0.0],[-1.0, 0.0, 0.0]])
+        
         GL.glPushMatrix()
         GL.glTranslatef(*self.position)
         GL.glColor3fv(self.color)
         GL.glBindTexture(GL.GL_TEXTURE_2D,0)
+        
+        GLU.gluTessNormal(self.tess, 0.0, -1.0, 0.0)
+        
+        GLU.gluTessBeginPolygon(self.tess,None)
+        GLU.gluTessBeginContour(self.tess)
+        for i in range(0,len(x)):
+            vertex =  (x[i]*grid, _height, z[i-1]*grid)
+            GLU.gluTessVertex(self.tess, vertex, vertex)
+            vertex =  (x[i]*grid, _height, z[i]*grid)
+            GLU.gluTessVertex(self.tess, vertex, vertex)
+        GLU.gluTessEndContour(self.tess)
+        GLU.gluTessEndPolygon(self.tess)
+        
+        
+        normal = np.array([-1.0, 0.0, 0.0])
+        rotccw90 = np.array([[0.0, 0.0, 1.0],[0.0, 1.0, 0.0],[-1.0, 0.0, 0.0]])
+        rotcw90 = np.array([[0.0, 0.0, -1.0],[0.0, 1.0, 0.0],[1.0, 0.0, 0.0]])
+        rot = (rotccw90, rotcw90)
+        sign = 1
+        
         for i in range(0,len(x)):
             GL.glNormal3fv(normal)
             GL.glBegin(GL.GL_QUADS)
@@ -122,7 +153,11 @@ class brick(object):
             GL.glVertex3f(x[i]*grid, 0, z[i]*grid)
             GL.glVertex3f(x[i]*grid, 0, z[i-1]*grid)
             GL.glEnd()
-            normal = np.dot(normal, rot)
+            curr_sign = np.sign(self.sides[2*i])
+            normal = np.dot(normal, rot[curr_sign == sign])
+            if not curr_sign == sign:
+                sign = curr_sign
+            
             GL.glNormal3fv(normal)
             GL.glBegin(GL.GL_QUADS)
             GL.glVertex3f(x[i]*grid,   0, z[i-1]*grid)
@@ -130,7 +165,12 @@ class brick(object):
             GL.glVertex3f(x[i-1]*grid, _height, z[i-1]*grid)
             GL.glVertex3f(x[i]*grid, _height, z[i-1]*grid)
             GL.glEnd()
-            normal = np.dot(normal, rot)
+            curr_sign = np.sign(self.sides[2*i])
+            
+            normal = np.dot(normal, rot[curr_sign == sign])
+            if not curr_sign == sign:
+                sign = curr_sign
+            
         GL.glTranslatef(self.left*grid+grid/2.0, (LEGO_BUMP_HEIGHT+_height)/2.0 , self.bottom*grid-grid/2.0)
         for i in range(self.left+1, self.right+1):
             for j in range(self.bottom+1, self.top+1):
@@ -168,9 +208,12 @@ def gl_init(width, height):
     
     GL.glEnable(GL.GL_TEXTURE_2D)
     GL.glEnable(GL.GL_ALPHA_TEST)
-    GL.glAlphaFunc(GL.GL_GREATER,0.1)
-    GL.glDisable(GL.GL_CULL_FACE)
     GL.glEnable(GL.GL_COLOR_MATERIAL)
+    GL.glDisable(GL.GL_CULL_FACE)
+    GL.glAlphaFunc(GL.GL_GREATER,0.1)
+    
+    GL.glClearAccum(0.0, 0.0, 0.0, 1.0)
+    GL.glClear(GL.GL_ACCUM_BUFFER_BIT)
     
     L_DRAW_2D = GL.glGenLists(2)
     L_DRAW_3D = L_DRAW_2D + 1
@@ -223,16 +266,15 @@ def _caped_cylinder(radius,height,color,segments):
     GL.glTranslatef(0.0, 0.0, -height/2.0)
     
 #    glColor3f(1.0, 0.0 , 1.0)
-#    gluQuadricOrientation(quadratic, GLU_INSIDE)
+#    GLU.gluQuadricOrientation(quadratic, GLU.GLU_INSIDE)
 #    gluDisk(quadratic,0,radius,segments,1)
-#    gluQuadricOrientation(quadratic, GLU_OUTSIDE)
+#    GLU.gluQuadricOrientation(quadratic, GLU.GLU_OUTSIDE)
     
     GL.glColor3fv(color)
     GL.glBindTexture(GL.GL_TEXTURE_2D, 0)
     GLU.gluCylinder(quadratic,radius,radius,height,segments,segments)
     
     GL.glTranslatef(0.0,0.0,height)
-    
     GL.glBindTexture(GL.GL_TEXTURE_2D, legocaptex)
     GLU.gluDisk(quadratic,0,radius,segments,1)
     GL.glBindTexture(GL.GL_TEXTURE_2D, 0)
