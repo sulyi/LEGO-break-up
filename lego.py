@@ -35,26 +35,26 @@ class LoopError(ValueError):
     pass
     
 class brick(object):
-    def __init__(self, sides, size, color,  position = None):
+    def __init__(self, sides, size, color,  position = (0.0, 0.0, 0.0)):
         self.sides = sides
         self.color = color
         self.size = size
+        self.position = position
+
         _combine = lambda _points, _vertices, _weights: _points 
             
-        
         self.tess = GLU.gluNewTess()
-        GLU.gluTessNormal(self.tess, 0.0,1.0,0.0)
         GLU.gluTessCallback(self.tess, GLU.GLU_TESS_BEGIN, GL.glBegin)
         GLU.gluTessCallback(self.tess,GLU.GLU_TESS_VERTEX,GL.glVertex3fv)
         GLU.gluTessCallback(self.tess,GLU.GLU_TESS_COMBINE,_combine)
         GLU.gluTessCallback(self.tess, GLU.GLU_TESS_END, GL.glEnd)
         GLU.gluTessProperty(self.tess, GLU.GLU_TESS_WINDING_RULE, GLU.GLU_TESS_WINDING_ODD)
-        if position is not None:
-            self.position = position
-        else:
-            self.position = (0,0,0)
+
     def __del__(self):
-        GLU.gluDeleteTess(self.tess)
+        if hasattr(self,'tess'):
+        # checking this might be speared with rearrangement of init
+        # but where's the fun in that ?
+            GLU.gluDeleteTess(self.tess)
                 
     @property
     def sides(self):
@@ -66,6 +66,11 @@ class brick(object):
         self._sides = sides
     
     def _is_closed(self,sides):
+	length = len(sides)
+	if length < 4:
+            raise LoopError, "Too few sides given to describe a reengular shape"
+ 	if length % 2 == 1:
+            raise LoopError, "Odd number of sides can't border a rectenular shape"
         xmax=0
         xmin=0
         ymax=0
@@ -126,8 +131,8 @@ class brick(object):
         GL.glColor3fv(self.color)
         GL.glBindTexture(GL.GL_TEXTURE_2D,0)
         
-        GLU.gluTessNormal(self.tess, 0.0, -1.0, 0.0)
-        
+        #GLU.gluTessNormal(self.tess, 0.0, 1.0, 0.0)
+        GL.glNormal3f(0.0, 1.0, 0.0)
         GLU.gluTessBeginPolygon(self.tess,None)
         GLU.gluTessBeginContour(self.tess)
         for i in range(0,len(x)):
@@ -139,37 +144,24 @@ class brick(object):
         GLU.gluTessEndPolygon(self.tess)
         
         
-        normal = np.array([-1.0, 0.0, 0.0])
-        rotccw90 = np.array([[0.0, 0.0, 1.0],[0.0, 1.0, 0.0],[-1.0, 0.0, 0.0]])
-        rotcw90 = np.array([[0.0, 0.0, -1.0],[0.0, 1.0, 0.0],[1.0, 0.0, 0.0]])
-        rot = (rotccw90, rotcw90)
-        sign = 1
+        normalx = np.array((1.0, 0.0, 0.0))
+        normalz = np.array((0.0, 0.0, 1.0))
         
         for i in range(0,len(x)):
-            GL.glNormal3fv(normal)
+            GL.glNormal3fv(np.sign(self.sides[2*i])*normalz)
             GL.glBegin(GL.GL_QUADS)
             GL.glVertex3f(x[i]*grid, _height, z[i-1]*grid)
             GL.glVertex3f(x[i]*grid, _height, z[i]*grid)
             GL.glVertex3f(x[i]*grid, 0, z[i]*grid)
             GL.glVertex3f(x[i]*grid, 0, z[i-1]*grid)
             GL.glEnd()
-            curr_sign = np.sign(self.sides[2*i])
-            normal = np.dot(normal, rot[curr_sign == sign])
-            if not curr_sign == sign:
-                sign = curr_sign
-            
-            GL.glNormal3fv(normal)
+            GL.glNormal3fv(np.sign(self.sides[2*i+1])*normalx)
             GL.glBegin(GL.GL_QUADS)
             GL.glVertex3f(x[i]*grid,   0, z[i-1]*grid)
             GL.glVertex3f(x[i-1]*grid, 0, z[i-1]*grid)
             GL.glVertex3f(x[i-1]*grid, _height, z[i-1]*grid)
             GL.glVertex3f(x[i]*grid, _height, z[i-1]*grid)
             GL.glEnd()
-            curr_sign = np.sign(self.sides[2*i])
-            
-            normal = np.dot(normal, rot[curr_sign == sign])
-            if not curr_sign == sign:
-                sign = curr_sign
             
         GL.glTranslatef(self.left*grid+grid/2.0, (LEGO_BUMP_HEIGHT+_height)/2.0 , self.bottom*grid-grid/2.0)
         for i in range(self.left+1, self.right+1):
@@ -388,7 +380,7 @@ def load_2d_texture(imageData, width, height):
     GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_LINEAR)
     GL.glTexParameteri(GL.GL_TEXTURE_2D,GL.GL_TEXTURE_WRAP_S,GL.GL_REPEAT)
     GL.glTexParameteri(GL.GL_TEXTURE_2D,GL.GL_TEXTURE_WRAP_T,GL.GL_REPEAT)
-    # FIXME: power of 2
+    
     GL.glTexImage2D(GL.GL_TEXTURE_2D, 0, GL.GL_RGBA, width, height, 0, GL.GL_RGBA, GL.GL_UNSIGNED_BYTE, imageData)
     return texture
     

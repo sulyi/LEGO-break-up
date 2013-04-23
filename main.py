@@ -9,10 +9,9 @@ import os,gettext
 
 try:
     import pygame
-    import pygame.locals
+    import numpy as np
     
     import OpenGL.GL as GL
-    import OpenGL_accelerate as GLA 
     #import OpenGL.GLU as GLU  
 except ImportError:
     with open('README.md', 'r') as markdown:
@@ -36,6 +35,23 @@ class button(pygame.Rect):
     def is_hit_by(self, point):
         return self.contains(pygame.Rect( point, (0,0) ))
 
+def growPOT(surface):
+    powers_of_two = (1,2,4,8,16,32,64,256,512,1024,2048,4096) # futher are out of HD
+    if not isinstance(surface, pygame.Surface):
+        raise ValueError, "growPOT can be done on a Surface (from pygame)"
+    width = surface.get_width()
+    height = surface.get_height()
+    for i in powers_of_two:
+        if width>=i:
+            break
+    for j in powers_of_two:
+        if height>=j:
+            break
+    if not ( width == powers_of_two[i] and height == powers_of_two[j] ):
+        canvas = pygame.Surface((powers_of_two[i], powers_of_two[j]),pygame.SRCALPHA)
+        surface.blit(canvas,(0,0))
+    return surface
+         
 if __name__ == '__main__':
     
     initial_brick_width = 2
@@ -75,13 +91,14 @@ if __name__ == '__main__':
     
     textures = dict()
     
-    image = pygame.image.load(os.path.join('data','ui.png'))
+    image = growPOT(pygame.image.load(os.path.join('data','ui.png')))
+    
     imageData = pygame.image.tostring(image, "RGBA", True)
     
     width = image.get_width()
     height = image.get_height()
     
-    # TODO: textured Rect class
+    # TODO: textured Rect class (note growPOT)
     
     textures["ui"] =  ( lego.load_2d_texture(imageData, width , height),
                         (1.0, 1.0, 1.0), 0, 0, width, height )
@@ -93,37 +110,42 @@ if __name__ == '__main__':
     text_shadow = font.render( po["width"], True, (192, 64, 128) )
     text = font.render( po["width"], True, (153, 76, 178) )
     text_shadow.blit(text, (2,2))
+    text = growPOT(text_shadow)
     
-    textures["width_text"] = ( lego.load_2d_texture( pygame.image.tostring(text_shadow, 'RGBA', True), 
-                                                 text_shadow.get_width(), text_shadow.get_height() ),   
+    textures["width_text"] = ( lego.load_2d_texture( pygame.image.tostring(text, 'RGBA', True), 
+                                                 text.get_width(), text.get_height() ),   
                            (1.0, 1.0, 1.0), 20, 20, 190, 90 )
     
     text_shadow = font.render( po["depth"], True, (192, 64, 128) )
     text = font.render( po["depth"], True, (153, 76, 178) )
     text_shadow.blit(text, (2,2))
+    text = growPOT(text_shadow)
     
-    textures["depth_text"] = ( lego.load_2d_texture( pygame.image.tostring(text_shadow, 'RGBA', True), 
-                                                 text_shadow.get_width(), text_shadow.get_height() ),   
+    textures["depth_text"] = ( lego.load_2d_texture( pygame.image.tostring(text, 'RGBA', True), 
+                                                 text.get_width(), text.get_height() ),   
                            (1.0, 1.0, 1.0), 20, 235, 190, 305 )
     
     text_shadow = font.render( po["height"], True, (192, 64, 128) )
     text = font.render( po["height"], True, (153, 76, 178) )
     text_shadow.blit(text, (2,2))
+    text = growPOT(text_shadow)
     
-    textures["height_text"] = ( lego.load_2d_texture( pygame.image.tostring(text_shadow, 'RGBA', True), 
-                                                 text_shadow.get_width(), text_shadow.get_height() ),   
+    textures["height_text"] = ( lego.load_2d_texture( pygame.image.tostring(text, 'RGBA', True), 
+                                                 text.get_width(), text.get_height() ),   
                            (1.0, 1.0, 1.0), 20, 20, 190, 90 )  
     
     print "Done"
     
     print "\nEntering drawing loop\n"
     
-    brick = lego.brick((2,1,-1,1,2,-3,2,-1,-3,-2,-1,1,-3,1,2,2),lego.LEGO_BIG,(1.0, 0.1, 0.2))
+    #brick = lego.brick((2,1,-1,1,2,-3,2,-1,-3,-2,-1,1,-3,1,2,2),lego.LEGO_BIG,(1.0, 0.1, 0.2))
+    brick = lego.brick((5,3,-2,-1,-2, -1,-1,-1),lego.LEGO_BIG,(1.0, 0.1, 0.2))
+    lightp = np.array((3.0, -4.0, -4.0, -1.0))
+    
     GL.glTranslatef(2.0,0.2,-15)
     GL.glRotatef(40, 1.0, 0.0, 0.0)
     
-    
-    rot_speed = 1.5
+    rot_speed = 2
     ticker = pygame.time.Clock()
     running = True
     rotating = True
@@ -164,25 +186,24 @@ if __name__ == '__main__':
             accumulate = not accumulate
             ticker.tick(2*fps)
             if rotating:
-                GL.glRotatef(rot_speed, 0.0, 1.0, 0.0)
+                GL.glRotatef(rot_speed/2, 0.0, 1.0, 0.0)
         else:
             pygame.display.flip()
             GL.glClear(GL.GL_COLOR_BUFFER_BIT|GL.GL_DEPTH_BUFFER_BIT)
             ticker.tick(fps)
             if rotating:
-                GL.glRotatef(2*rot_speed, 0.0, 1.0, 0.0)
+                GL.glRotatef(rot_speed, 0.0, 1.0, 0.0)
         
         # draw 3D stuff
         
         GL.glCallList(lego.L_DRAW_3D)
-        
-        GL.glLightfv( GL.GL_LIGHT0, GL.GL_POSITION, (3.0, -4.0, -4.0, -1.0) ) 
+        GL.glLightfv( GL.GL_LIGHT0, GL.GL_POSITION, lightp)
         
         ps = GL.glGetInteger(GL.GL_POINT_SIZE)
         GL.glPointSize(10)
         GL.glColor3f(1.0, 1.0, 0.5)
         GL.glBegin(GL.GL_POINTS)
-        GL.glVertex3f(3.0, -4.0, -4.0)
+        GL.glVertex3fv( np.array((-0.1, -0.1, -0.1)) - lightp[:3] )
         GL.glEnd()
         GL.glPointSize(ps)
         
