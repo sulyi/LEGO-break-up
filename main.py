@@ -52,8 +52,7 @@ def growPOT(surface):
         surface.blit(canvas,(0,0))
     return surface
          
-if __name__ == '__main__':
-    
+def main():
     initial_brick_width = 2
     initial_brick_length = 3
     initial_brick_height = lego.LEGO_BIG
@@ -70,7 +69,7 @@ if __name__ == '__main__':
     print "Done"
     
     print "Initializing screen ...",
-    screen = pygame.display.set_mode ((800,600), pygame.OPENGL|pygame.DOUBLEBUF, 24)
+    pygame.display.set_mode ((800,600), pygame.OPENGL|pygame.DOUBLEBUF, 24)
     
     print "Done"
     
@@ -138,8 +137,12 @@ if __name__ == '__main__':
     
     print "\nEntering drawing loop\n"
     
-#    test_piece = lego.piece((2,1,-1,1,2,-3,2,-1,-3,-2,-1,1,-3,1,2,2),lego.LEGO_BIG,(1.0, 0.1, 0.2))
-    test_piece = lego.piece((5,3,-2,-1,-2, -1,-1,-1),lego.LEGO_BIG,(1.0, 0.1, 0.2))
+    test_1 = lego.piece((5,3,-2,-1,-2, -1,-1,-1),lego.LEGO_BIG,(1.0, 0.1, 0.2),(1,3,0))
+    test_2 = lego.piece((3, -1, 3, 3, -4, 1, 1, 2, -3, -5),lego.LEGO_BIG,(0.2, 0.8, 0.3),(-1,1,0))
+    test_3 = lego.piece((2, -2, -1, -1, 1, -1, 3, 1, 2, 2, -3, 4, -2, -1, -2, -2),lego.LEGO_BIG,(0.2, 0.3, 0.8),(-5,2,0))
+    test_4 = lego.piece((3, 3, 1, 1, 1, -5, 1, -1, -3, -2, -4, -1, -3, 2, -2, 1, 4, 1, 2, 1),lego.LEGO_BIG,(0.8, 0.3, 0.8),(2,0,0))
+    test_5 = lego.piece((3, -4, -3, 4),lego.LEGO_SMALL,(0.8, 0.8, 0.3),(0,2,1))
+    
     lightp = np.array((3.0, -4.0, -4.0, -1.0))
     
     GL.glTranslatef(2.0,0.2,-15)
@@ -197,7 +200,7 @@ if __name__ == '__main__':
         # draw 3D stuff
         
         GL.glCallList(lego.L_DRAW_3D)
-        GL.glLightfv( GL.GL_LIGHT0, GL.GL_POSITION, lightp)
+        #GL.glLightfv( GL.GL_LIGHT0, GL.GL_POSITION, lightp)
         
         lego.draw_grid()
         
@@ -210,8 +213,12 @@ if __name__ == '__main__':
         GL.glPointSize(ps)
         
 # TODO: add height_btn, change height argument
-#        lego.draw_lego_brick( width_btn.value, length_btn.value, initial_brick_height , (1.0, 0.1, 0.2) )
-        test_piece.draw()
+
+        test_1.draw()
+        test_2.draw()
+        test_3.draw()
+        test_4.draw()
+        test_5.draw()
         
         # draw 2D stuff
         
@@ -242,3 +249,6 @@ if __name__ == '__main__':
     lego.finish()    
     pygame.quit()
     print "Bye!"
+
+
+if __name__ == '__main__' : main() 

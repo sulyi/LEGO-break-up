@@ -50,6 +50,7 @@ class piece(object):
         self.color = color
         self.size = size
         self.position = position
+        self._position = (position[0] * LEGO_GRID, position[2] * LEGO_BIG_HEIGHT, position[1] * LEGO_GRID )
 
         _combine = lambda _points, _vertices, _weights: _points 
             
@@ -106,9 +107,9 @@ class piece(object):
         if vertical[j] and horizontal[i]:
             raise LoopError, "Both horizontal (even) and vertical (odd indexed) sides are not closed"
         if vertical[j]:
-            raise LoopError, "Vertical (odd indexed) sides are not closed."
+            raise LoopError, "Even indexed sides are not closed."
         if horizontal[i]:
-            raise LoopError, "Horizontal (even indexed) sides are not closed"
+            raise LoopError, "Odd indexed sides are not closed"
         
         self._coordinates = horizontal[:-1],vertical[:-1]
         self.right = xmax
@@ -136,11 +137,11 @@ class piece(object):
         z = self._coordinates[1]
         
         GL.glPushMatrix()
-        GL.glTranslatef(*self.position)
+        GL.glTranslatef(*self._position)
         GL.glColor3fv(self.color)
         GL.glBindTexture(GL.GL_TEXTURE_2D,0)
         
-        #GLU.gluTessNormal(self.tess, 0.0, 1.0, 0.0)
+        GLU.gluTessNormal(self.tess, 0.0, 1.0, 0.0)
         GL.glNormal3f(0.0, 1.0, 0.0)
         GLU.gluTessBeginPolygon(self.tess,None)
         GLU.gluTessBeginContour(self.tess)
@@ -187,8 +188,8 @@ def draw_grid():
     
     GL.glDisable(GL.GL_LIGHTING)
     ls = GL.glGetFloat(GL.GL_LINE_WIDTH)
-    GL.glLineWidth(2.0)
-    GL.glColor3f(0.0, 1.0, 0.3)
+    GL.glLineWidth(3.0)
+    GL.glColor3f(0.2, 0.5, 0.5)
     GL.glBegin(GL.GL_LINES)
     
     half_interval = 10
@@ -294,8 +295,8 @@ def _caped_cylinder(radius,height,color,segments):
     #gluDisk(quadratic,0,radius,segments,1)
     #GLU.gluQuadricOrientation(quadratic, GLU.GLU_OUTSIDE)
     
-    GL.glColor3fv(color)
-    GL.glBindTexture(GL.GL_TEXTURE_2D, 0)
+    #GL.glColor3fv(color)
+    #GL.glBindTexture(GL.GL_TEXTURE_2D, 0)
     GLU.gluCylinder(quadratic,radius,radius,height,segments,segments)
     
     GL.glTranslatef(0.0,0.0,height)
