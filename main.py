@@ -12,7 +12,7 @@ try:
     import numpy as np
     
     import OpenGL.GL as GL
-    #import OpenGL.GLU as GLU  
+#   import OpenGL.GLU as GLU  
 except ImportError:
     with open('README.md', 'r') as markdown:
         for line in markdown:
@@ -91,21 +91,21 @@ if __name__ == '__main__':
     
     textures = dict()
     
-    image = growPOT(pygame.image.load(os.path.join('data','ui.png')))
+    _image = growPOT(pygame.image.load(os.path.join('data','ui.png')))
     
-    imageData = pygame.image.tostring(image, "RGBA", True)
+    imageData = pygame.image.tostring(_image, "RGBA", True)
     
-    width = image.get_width()
-    height = image.get_height()
+    width = _image.get_width()
+    height = _image.get_height()
     
-    # TODO: textured Rect class (note growPOT)
+# TODO: textured Rect class (note growPOT)
     
     textures["ui"] =  ( lego.load_2d_texture(imageData, width , height),
                         (1.0, 1.0, 1.0), 0, 0, width, height )
     
     font = pygame.font.SysFont("courier", 32, True, True)
     
-    # TODO: text renderer class
+# TODO: text renderer class
     
     text_shadow = font.render( po["width"], True, (192, 64, 128) )
     text = font.render( po["width"], True, (153, 76, 178) )
@@ -138,8 +138,8 @@ if __name__ == '__main__':
     
     print "\nEntering drawing loop\n"
     
-    #brick = lego.brick((2,1,-1,1,2,-3,2,-1,-3,-2,-1,1,-3,1,2,2),lego.LEGO_BIG,(1.0, 0.1, 0.2))
-    brick = lego.brick((5,3,-2,-1,-2, -1,-1,-1),lego.LEGO_BIG,(1.0, 0.1, 0.2))
+#    test_piece = lego.piece((2,1,-1,1,2,-3,2,-1,-3,-2,-1,1,-3,1,2,2),lego.LEGO_BIG,(1.0, 0.1, 0.2))
+    test_piece = lego.piece((5,3,-2,-1,-2, -1,-1,-1),lego.LEGO_BIG,(1.0, 0.1, 0.2))
     lightp = np.array((3.0, -4.0, -4.0, -1.0))
     
     GL.glTranslatef(2.0,0.2,-15)
@@ -199,6 +199,8 @@ if __name__ == '__main__':
         GL.glCallList(lego.L_DRAW_3D)
         GL.glLightfv( GL.GL_LIGHT0, GL.GL_POSITION, lightp)
         
+        lego.draw_grid()
+        
         ps = GL.glGetInteger(GL.GL_POINT_SIZE)
         GL.glPointSize(10)
         GL.glColor3f(1.0, 1.0, 0.5)
@@ -207,9 +209,9 @@ if __name__ == '__main__':
         GL.glEnd()
         GL.glPointSize(ps)
         
-        # TODO: add height_btn, change height argument
-        #lego.draw_lego_brick( width_btn.value, length_btn.value, initial_brick_height , (1.0, 0.1, 0.2) )
-        brick.draw()
+# TODO: add height_btn, change height argument
+#        lego.draw_lego_brick( width_btn.value, length_btn.value, initial_brick_height , (1.0, 0.1, 0.2) )
+        test_piece.draw()
         
         # draw 2D stuff
         

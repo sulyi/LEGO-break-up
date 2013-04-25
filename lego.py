@@ -3,27 +3,37 @@ Created on 2013.04.03.
 
 @author: arsene
 '''
+
+import sys,os
+
 import OpenGL.GL as GL
 import OpenGL.GLU as GLU
 
 import numpy as np
 
+import pygame.image
+from pygame import error as PygameError
+
 try:
-    from lego_constants import *
-except ImportError:
-    print "Please run lego_configure.py"
-    raise
+    _image = pygame.image.load(os.path.join('data','legocap.png'))
+except PygameError as e:
+    print e.message
+    sys.exit(1)
+ 
+LEGO_CAP_TEXTURE = pygame.image.tostring(_image, "RGBA", True)
+LEGO_CAP_WIDTH = _image.get_width()
+LEGO_CAP_HEIGHT = _image.get_height()
 
+LEGO_SMALL_HEIGHT = 0.32
+LEGO_BIG_HEIGHT = 0.96
+LEGO_BUMP_HEIGHT = 0.17
 
-LEGO_SMALL_HEIGHT=0.32
-LEGO_BIG_HEIGHT=0.96
-LEGO_BUMP_HEIGHT=0.17
+LEGO_HALF_BUMP_DIST = 0.15
+LEGO_BUMP_RADIUS = 0.25
+LEGO_GRID = 2*(LEGO_BUMP_RADIUS+LEGO_HALF_BUMP_DIST)
 
-LEGO_HALF_BUMP_DIST=0.15
-LEGO_BUMP_RADIUS=0.25
-
-LEGO_BIG=True
-LEGO_SMALL=False
+LEGO_BIG = True
+LEGO_SMALL = False
 
 SCREEN_WIDTH = None 
 SCREEN_HEIGHT = None
@@ -34,7 +44,7 @@ L_DRAW_3D = None
 class LoopError(ValueError):
     pass
     
-class brick(object):
+class piece(object):
     def __init__(self, sides, size, color,  position = (0.0, 0.0, 0.0)):
         self.sides = sides
         self.color = color
@@ -66,10 +76,10 @@ class brick(object):
         self._sides = sides
     
     def _is_closed(self,sides):
-	length = len(sides)
-	if length < 4:
+        length = len(sides)
+        if length < 4:
             raise LoopError, "Too few sides given to describe a reengular shape"
- 	if length % 2 == 1:
+        if length % 2 == 1:
             raise LoopError, "Odd number of sides can't border a rectenular shape"
         xmax=0
         xmin=0
@@ -120,7 +130,6 @@ class brick(object):
         return odd
     
     def draw(self):
-        grid = 2*(LEGO_BUMP_RADIUS+LEGO_HALF_BUMP_DIST)
         _height = LEGO_BIG_HEIGHT if self.size else LEGO_SMALL_HEIGHT
         _length = self.bottom - self.top
         x = self._coordinates[0]
@@ -136,9 +145,9 @@ class brick(object):
         GLU.gluTessBeginPolygon(self.tess,None)
         GLU.gluTessBeginContour(self.tess)
         for i in range(0,len(x)):
-            vertex =  (x[i]*grid, _height, z[i-1]*grid)
+            vertex =  (x[i]*LEGO_GRID, _height, z[i-1]*LEGO_GRID)
             GLU.gluTessVertex(self.tess, vertex, vertex)
-            vertex =  (x[i]*grid, _height, z[i]*grid)
+            vertex =  (x[i]*LEGO_GRID, _height, z[i]*LEGO_GRID)
             GLU.gluTessVertex(self.tess, vertex, vertex)
         GLU.gluTessEndContour(self.tess)
         GLU.gluTessEndPolygon(self.tess)
@@ -150,28 +159,51 @@ class brick(object):
         for i in range(0,len(x)):
             GL.glNormal3fv(np.sign(self.sides[2*i])*normalz)
             GL.glBegin(GL.GL_QUADS)
-            GL.glVertex3f(x[i]*grid, _height, z[i-1]*grid)
-            GL.glVertex3f(x[i]*grid, _height, z[i]*grid)
-            GL.glVertex3f(x[i]*grid, 0, z[i]*grid)
-            GL.glVertex3f(x[i]*grid, 0, z[i-1]*grid)
+            GL.glVertex3f( x[i] * LEGO_GRID, _height, z[i-1] * LEGO_GRID)
+            GL.glVertex3f( x[i] * LEGO_GRID, _height, z[i]   * LEGO_GRID)
+            GL.glVertex3f( x[i] * LEGO_GRID, 0.0,     z[i]   * LEGO_GRID)
+            GL.glVertex3f( x[i] * LEGO_GRID, 0.0,     z[i-1] * LEGO_GRID)
             GL.glEnd()
             GL.glNormal3fv(np.sign(self.sides[2*i+1])*normalx)
             GL.glBegin(GL.GL_QUADS)
-            GL.glVertex3f(x[i]*grid,   0, z[i-1]*grid)
-            GL.glVertex3f(x[i-1]*grid, 0, z[i-1]*grid)
-            GL.glVertex3f(x[i-1]*grid, _height, z[i-1]*grid)
-            GL.glVertex3f(x[i]*grid, _height, z[i-1]*grid)
+            GL.glVertex3f( x[i]   * LEGO_GRID, 0.0,     z[i-1] * LEGO_GRID )
+            GL.glVertex3f( x[i-1] * LEGO_GRID, 0.0,     z[i-1] * LEGO_GRID )
+            GL.glVertex3f( x[i-1] * LEGO_GRID, _height, z[i-1] * LEGO_GRID )
+            GL.glVertex3f( x[i]   * LEGO_GRID, _height, z[i-1] * LEGO_GRID )
             GL.glEnd()
             
-        GL.glTranslatef(self.left*grid+grid/2.0, (LEGO_BUMP_HEIGHT+_height)/2.0 , self.bottom*grid-grid/2.0)
-        for i in range(self.left+1, self.right+1):
-            for j in range(self.bottom+1, self.top+1):
-                GL.glTranslatef(0.0, 0.0, grid)
-                if self.is_hit((i,j)):
-                    _caped_cylinder(LEGO_BUMP_RADIUS, _height+LEGO_BUMP_HEIGHT, self.color, 32)
-            GL.glTranslatef(0.0, 0.0, _length*grid)
-            GL.glTranslatef(grid, 0.0, 0.0)
+        GL.glTranslatef( self.left*LEGO_GRID + LEGO_GRID/2.0, (LEGO_BUMP_HEIGHT+_height)/2.0 , self.bottom*LEGO_GRID - LEGO_GRID/2.0 )
+        for i in range( self.left+1, self.right+1 ):
+            for j in range( self.bottom+1, self.top+1 ):
+                GL.glTranslatef( 0.0, 0.0, LEGO_GRID )
+                if self.is_hit( (i,j) ):
+                    _caped_cylinder( LEGO_BUMP_RADIUS, _height+LEGO_BUMP_HEIGHT, self.color, 32 )
+            GL.glTranslatef( 0.0, 0.0, _length*LEGO_GRID )
+            GL.glTranslatef( LEGO_GRID, 0.0, 0.0 )
         GL.glPopMatrix()
+
+def draw_grid():
+    GL.glPushMatrix()
+    
+    GL.glDisable(GL.GL_LIGHTING)
+    ls = GL.glGetFloat(GL.GL_LINE_WIDTH)
+    GL.glLineWidth(2.0)
+    GL.glColor3f(0.0, 1.0, 0.3)
+    GL.glBegin(GL.GL_LINES)
+    
+    half_interval = 10
+    
+    for i in range(-half_interval, half_interval+1):
+        GL.glVertex3f( i * LEGO_GRID, 0.0,  half_interval * LEGO_GRID )
+        GL.glVertex3f( i * LEGO_GRID, 0.0, -half_interval * LEGO_GRID )
+        GL.glVertex3f(  half_interval * LEGO_GRID, 0.0, i * LEGO_GRID )
+        GL.glVertex3f( -half_interval * LEGO_GRID, 0.0, i * LEGO_GRID )
+        
+    GL.glEnd()
+    GL.glLineWidth(ls)
+    GL.glEnable(GL.GL_LIGHTING)
+    
+    GL.glPopMatrix()
         
 def gl_init(width, height):
     global legocaptex,quadratic, \
@@ -179,7 +211,7 @@ def gl_init(width, height):
            SCREEN_WIDTH, SCREEN_HEIGHT, \
            LEGO_CAP_TEXTURE
     
-    legocaptex = load_2d_texture(LEGO_CAP_TEXTURE, 256, 256)
+    legocaptex = load_2d_texture(LEGO_CAP_TEXTURE, LEGO_CAP_WIDTH, LEGO_CAP_HEIGHT)
     
     SCREEN_WIDTH = width
     SCREEN_HEIGHT = height
@@ -191,9 +223,9 @@ def gl_init(width, height):
     GLU.gluQuadricOrientation(quadratic, GLU.GLU_OUTSIDE)
     GLU.gluQuadricNormals(quadratic, GLU.GLU_SMOOTH)
     
-    GL.glLightfv(GL.GL_LIGHT0, GL.GL_AMBIENT, (0.1, 0.1, 0.1, 1.0))        # Setup The Ambient Light
-    GL.glLightfv(GL.GL_LIGHT0, GL.GL_DIFFUSE, (0.8, 0.8, 0.8, 1.0))        # Setup The Diffuse Light
-    GL.glEnable(GL.GL_LIGHT0)                                           # Enable Light One
+    GL.glLightfv(GL.GL_LIGHT0, GL.GL_AMBIENT, (0.1, 0.1, 0.1, 1.0))  # Setup The Ambient Light
+    GL.glLightfv(GL.GL_LIGHT0, GL.GL_DIFFUSE, (0.8, 0.8, 0.8, 1.0))  # Setup The Diffuse Light
+    GL.glEnable(GL.GL_LIGHT0)                                        # Enable Light One
     
     GL.glClearColor(0.0, 0.2, 0.5, 1.0)
     GL.glViewport(0,0,800,600)
@@ -211,26 +243,26 @@ def gl_init(width, height):
     L_DRAW_3D = L_DRAW_2D + 1
     
     # L_DRAW_3D list
-    
     GL.glNewList(L_DRAW_3D,GL.GL_COMPILE)
+    
     GL.glMatrixMode(GL.GL_PROJECTION)
     GL.glLoadIdentity()
-    GLU.gluPerspective(45.0, float(800)/float(600), 0.1, 100.0)
+    GLU.gluPerspective(45.0, float(width)/float(height), 0.1, 100.0)
 #    gluLookAt(0.0, 0.0, -6.0,
 #              0.0, 0.0, 0.0,
 #              0.0, 0.0, 1.0
 #              )
     GL.glMatrixMode(GL.GL_MODELVIEW)
     
-    #glEnable(GL_COLOR_MATERIAL)
+#    glEnable(GL_COLOR_MATERIAL)
     GL.glEnable(GL.GL_DEPTH_TEST)
     GL.glEnable(GL.GL_LIGHTING)
     
     GL.glEndList()
     
     # L_DRAW_2D list
-    
     GL.glNewList(L_DRAW_2D, GL.GL_COMPILE)
+    
     GL.glMatrixMode(GL.GL_PROJECTION)
     GL.glLoadIdentity()
     GL.glOrtho(0.0, width, height, 0.0, -1.0, 10.0)
@@ -238,7 +270,7 @@ def gl_init(width, height):
     GL.glLoadIdentity()
     GL.glClear(GL.GL_DEPTH_BUFFER_BIT)
     
-    #glDisable(GL_COLOR_MATERIAL)
+#    glDisable(GL_COLOR_MATERIAL)
     GL.glDisable(GL.GL_DEPTH_TEST)
     GL.glDisable(GL.GL_LIGHTING)
     
@@ -257,10 +289,10 @@ def _caped_cylinder(radius,height,color,segments):
     GL.glRotatef(-90, 1.0, 0.0, 0.0)
     GL.glTranslatef(0.0, 0.0, -height/2.0)
     
-#    glColor3f(1.0, 0.0 , 1.0)
-#    GLU.gluQuadricOrientation(quadratic, GLU.GLU_INSIDE)
-#    gluDisk(quadratic,0,radius,segments,1)
-#    GLU.gluQuadricOrientation(quadratic, GLU.GLU_OUTSIDE)
+    #glColor3f(1.0, 0.0 , 1.0)
+    #GLU.gluQuadricOrientation(quadratic, GLU.GLU_INSIDE)
+    #gluDisk(quadratic,0,radius,segments,1)
+    #GLU.gluQuadricOrientation(quadratic, GLU.GLU_OUTSIDE)
     
     GL.glColor3fv(color)
     GL.glBindTexture(GL.GL_TEXTURE_2D, 0)
@@ -283,16 +315,17 @@ def _five_face_box(width,height,depth, color):
     
     GL.glColor3fv(color)
     GL.glNormal3f(0.0, 0.0, 1.0)
-    GL.glBegin(GL.GL_QUADS)                # Start Drawing The Cube
+    GL.glBegin(GL.GL_QUADS)
 
     # Front Face
     GL.glTexCoord2f(0.0, 1.0); GL.glVertex3f(-_width, -_height,  _depth)
     GL.glTexCoord2f(1.0, 1.0); GL.glVertex3f( _width, -_height,  _depth)
     GL.glTexCoord2f(1.0, 0.0); GL.glVertex3f( _width,  _height,  _depth)
     GL.glTexCoord2f(0.0, 0.0); GL.glVertex3f(-_width,  _height,  _depth)
-    # TODO: add texcoordinates to other faces
+    
     GL.glEnd()
-
+    
+# TODO: add texcoordinates to other faces
     GL.glNormal3f(0.0, 0.0, -1.0)
     GL.glBegin(GL.GL_QUADS)
     
@@ -302,6 +335,27 @@ def _five_face_box(width,height,depth, color):
     GL.glVertex3f(-_width,  _height, -_depth)
     GL.glVertex3f( _width,  _height, -_depth)
     
+    GL.glEnd()
+    
+    GL.glNormal3f(1.0, 0.0, 0.0)
+    GL.glBegin(GL.GL_QUADS)
+
+    # Right face
+    GL.glVertex3f( _width, -_height,  _depth)
+    GL.glVertex3f( _width, -_height, -_depth)
+    GL.glVertex3f( _width,  _height, -_depth)
+    GL.glVertex3f( _width,  _height,  _depth)
+    
+    GL.glEnd()
+    
+    GL.glNormal3f(-1.0, 0.0, 0.0)
+    GL.glBegin(GL.GL_QUADS)
+
+    # Left Face
+    GL.glVertex3f(-_width, -_height, -_depth)
+    GL.glVertex3f(-_width, -_height,  _depth)
+    GL.glVertex3f(-_width,  _height,  _depth)
+    GL.glVertex3f(-_width,  _height, -_depth)
     
     GL.glEnd()
     
@@ -316,43 +370,19 @@ def _five_face_box(width,height,depth, color):
     
     GL.glEnd()
     
-#    GL.glColor3f(0.0, 0.0 , 0.0)
-#    GL.glNormal3f(0.0, -1.0, 0.0)
-#    GL.glBegin(GL.GL_QUADS)
-#
-#    # Bottom Face
-#    GL.glVertex3f(-_width, -_height, -_depth)
-#    GL.glVertex3f( _width, -_height, -_depth)
-#    GL.glVertex3f( _width, -_height,  _depth)
-#    GL.glVertex3f(-_width, -_height,  _depth)
-#
-#    GL.glEnd()
-    
-    GL.glNormal3f(1.0, 0.0, 0.0)
-    GL.glBegin(GL.GL_QUADS)
-
-    # Right face
-    GL.glVertex3f( _width, -_height,  _depth)
-    GL.glVertex3f( _width, -_height, -_depth)
-    GL.glVertex3f( _width,  _height, -_depth)
-    GL.glVertex3f( _width,  _height,  _depth)
-   
-    
-    GL.glEnd()
-    
-    GL.glNormal3f(-1.0, 0.0, 0.0)
-    GL.glBegin(GL.GL_QUADS)
-
-    # Left Face
-    GL.glVertex3f(-_width, -_height, -_depth)
-    GL.glVertex3f(-_width, -_height,  _depth)
-    GL.glVertex3f(-_width,  _height,  _depth)
-    GL.glVertex3f(-_width,  _height, -_depth)
-    
-    GL.glEnd()                # Done Drawing The Cube
+    #GL.glNormal3f(0.0, -1.0, 0.0)
+    #GL.glBegin(GL.GL_QUADS)
+    #
+    ## Bottom Face
+    #GL.glVertex3f(-_width, -_height, -_depth)
+    #GL.glVertex3f( _width, -_height, -_depth)
+    #GL.glVertex3f( _width, -_height,  _depth)
+    #GL.glVertex3f(-_width, -_height,  _depth)
+    #
+    #GL.glEnd()
 
 def draw_lego_brick(width, length, height, color):
-    grid=2*(LEGO_BUMP_RADIUS+LEGO_HALF_BUMP_DIST)
+    grid=LEGO_GRID
     _width=width*grid
     _depth=length*grid
     _height=LEGO_BIG_HEIGHT if height else LEGO_SMALL_HEIGHT
