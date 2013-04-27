@@ -20,7 +20,7 @@ except PygameError as e:
     print e.message
     sys.exit(1)
  
-LEGO_CAP_TEXTURE = pygame.image.tostring(_image, "RGBA", True)
+LEGO_CAP_TEXTURE_DATA = pygame.image.tostring(_image, "RGBA", True)
 LEGO_CAP_WIDTH = _image.get_width()
 LEGO_CAP_HEIGHT = _image.get_height()
 
@@ -45,7 +45,7 @@ class LoopError(ValueError):
     pass
     
 class piece(object):
-    def __init__(self, sides, size, color,  position = (0.0, 0.0, 0.0)):
+    def __init__( self, sides, size, color,  position = (0.0, 0.0, 0.0) ):
         self.sides = sides
         self.color = color
         self.size = size
@@ -81,24 +81,20 @@ class piece(object):
         GLU.gluTessEndContour(self.tess)
         GLU.gluTessEndPolygon(self.tess)
         
-        
-        normalx = np.array((1.0, 0.0, 0.0))
-        normalz = np.array((0.0, 0.0, 1.0))
-        
         for i in range(0,len(self._coordinates[0])):
-            GL.glNormal3fv(np.sign(self.sides[2*i])*normalz)
             GL.glBegin(GL.GL_QUADS)
+            GL.glNormal3f( np.sign(self.sides[2*i-1]), 0.0, 0.0 )
             GL.glVertex3f( self._coordinates[0][i] * LEGO_GRID, _height, self._coordinates[1][i-1] * LEGO_GRID)
             GL.glVertex3f( self._coordinates[0][i] * LEGO_GRID, _height, self._coordinates[1][i]   * LEGO_GRID)
             GL.glVertex3f( self._coordinates[0][i] * LEGO_GRID, 0.0,     self._coordinates[1][i]   * LEGO_GRID)
             GL.glVertex3f( self._coordinates[0][i] * LEGO_GRID, 0.0,     self._coordinates[1][i-1] * LEGO_GRID)
             GL.glEnd()
-            GL.glNormal3fv(np.sign(self.sides[2*i+1])*normalx)
+            GL.glNormal3f( 0.0, 0.0, -1.0 * np.sign(self.sides[2*i-2]) )
             GL.glBegin(GL.GL_QUADS)
-            GL.glVertex3f( self._coordinates[0][i]   * LEGO_GRID, 0.0,     self._coordinates[1][i-1] * LEGO_GRID )
-            GL.glVertex3f( self._coordinates[0][i-1] * LEGO_GRID, 0.0,     self._coordinates[1][i-1] * LEGO_GRID )
             GL.glVertex3f( self._coordinates[0][i-1] * LEGO_GRID, _height, self._coordinates[1][i-1] * LEGO_GRID )
             GL.glVertex3f( self._coordinates[0][i]   * LEGO_GRID, _height, self._coordinates[1][i-1] * LEGO_GRID )
+            GL.glVertex3f( self._coordinates[0][i]   * LEGO_GRID, 0.0,     self._coordinates[1][i-1] * LEGO_GRID )
+            GL.glVertex3f( self._coordinates[0][i-1] * LEGO_GRID, 0.0,     self._coordinates[1][i-1] * LEGO_GRID )
             GL.glEnd()
             
         GL.glTranslatef( self.left*LEGO_GRID + LEGO_GRID/2.0, (LEGO_BUMP_HEIGHT+_height)/2.0 , self.bottom*LEGO_GRID - LEGO_GRID/2.0 )
@@ -106,7 +102,7 @@ class piece(object):
             for j in range( self.bottom+1, self.top+1 ):
                 GL.glTranslatef( 0.0, 0.0, LEGO_GRID )
                 if self.is_hit( (i,j) ):
-                    _caped_cylinder( LEGO_BUMP_RADIUS, _height+LEGO_BUMP_HEIGHT, self.color, 32 )
+                    _caped_cylinder( LEGO_BUMP_RADIUS, _height+LEGO_BUMP_HEIGHT, 32 )
             GL.glTranslatef( 0.0, 0.0, _length*LEGO_GRID )
             GL.glTranslatef( LEGO_GRID, 0.0, 0.0 )
         GL.glEndList()
@@ -130,9 +126,9 @@ class piece(object):
     def _is_closed(self,sides):
         length = len(sides)
         if length < 4:
-            raise LoopError, "Too few sides given to describe a reengular shape"
+            raise LoopError, "Too few sides given to describe a rectangular shape"
         if length % 2 == 1:
-            raise LoopError, "Odd number of sides can't border a rectenular shape"
+            raise LoopError, "Odd number of sides can't border a rectangular shape"
         xmax=0
         xmin=0
         ymax=0
@@ -156,7 +152,7 @@ class piece(object):
         i+=1
         j+=1
         if vertical[j] and horizontal[i]:
-            raise LoopError, "Both horizontal (even) and vertical (odd indexed) sides are not closed"
+            raise LoopError, "Neither even nor odd indexed sides are closed"
         if vertical[j]:
             raise LoopError, "Even indexed sides are not closed."
         if horizontal[i]:
@@ -189,36 +185,13 @@ class piece(object):
         
         GL.glPopMatrix()
 
-def draw_grid():
-    GL.glPushMatrix()
-    
-    GL.glDisable(GL.GL_LIGHTING)
-    ls = GL.glGetFloat(GL.GL_LINE_WIDTH)
-    GL.glLineWidth(3.0)
-    GL.glColor3f(0.2, 0.5, 0.5)
-    GL.glBegin(GL.GL_LINES)
-    
-    half_interval = 10
-    
-    for i in range(-half_interval, half_interval+1):
-        GL.glVertex3f( i * LEGO_GRID, 0.0,  half_interval * LEGO_GRID )
-        GL.glVertex3f( i * LEGO_GRID, 0.0, -half_interval * LEGO_GRID )
-        GL.glVertex3f(  half_interval * LEGO_GRID, 0.0, i * LEGO_GRID )
-        GL.glVertex3f( -half_interval * LEGO_GRID, 0.0, i * LEGO_GRID )
-        
-    GL.glEnd()
-    GL.glLineWidth(ls)
-    GL.glEnable(GL.GL_LIGHTING)
-    
-    GL.glPopMatrix()
-        
 def gl_init(width, height):
     global legocaptex,quadratic, \
            L_DRAW_2D,L_DRAW_3D,  \
            SCREEN_WIDTH, SCREEN_HEIGHT, \
-           LEGO_CAP_TEXTURE
+           LEGO_CAP_TEXTURE_DATA
     
-    legocaptex = load_2d_texture(LEGO_CAP_TEXTURE, LEGO_CAP_WIDTH, LEGO_CAP_HEIGHT)
+    legocaptex = load_2d_texture(LEGO_CAP_TEXTURE_DATA, LEGO_CAP_WIDTH, LEGO_CAP_HEIGHT)
     
     SCREEN_WIDTH = width
     SCREEN_HEIGHT = height
@@ -255,11 +228,14 @@ def gl_init(width, height):
     GL.glMatrixMode(GL.GL_PROJECTION)
     GL.glLoadIdentity()
     GLU.gluPerspective(45.0, float(width)/float(height), 0.1, 100.0)
+    
 #    gluLookAt(0.0, 0.0, -6.0,
 #              0.0, 0.0, 0.0,
 #              0.0, 0.0, 1.0
 #              )
     GL.glMatrixMode(GL.GL_MODELVIEW)
+    GL.glLoadIdentity()
+    GL.glScale( 1.0, 1.0, -1.0 )
     
 #    glEnable(GL_COLOR_MATERIAL)
     GL.glEnable(GL.GL_DEPTH_TEST)
@@ -288,21 +264,41 @@ def gl_init(width, height):
 def finish():
     global quadratic
     GLU.gluDeleteQuadric(quadratic)
+
+def draw_grid():
+    GL.glPushMatrix()
     
-def _caped_cylinder(radius,height,color,segments):
+    GL.glDisable(GL.GL_LIGHTING)
+    ls = GL.glGetFloat(GL.GL_LINE_WIDTH)
+    GL.glLineWidth(3.0)
+    GL.glColor3f(0.2, 0.5, 0.5)
+    GL.glBegin(GL.GL_LINES)
+    
+    half_interval = 10
+    
+    for i in range(-half_interval, half_interval+1):
+        GL.glVertex3f( i * LEGO_GRID, 0.0,  half_interval * LEGO_GRID )
+        GL.glVertex3f( i * LEGO_GRID, 0.0, -half_interval * LEGO_GRID )
+        GL.glVertex3f(  half_interval * LEGO_GRID, 0.0, i * LEGO_GRID )
+        GL.glVertex3f( -half_interval * LEGO_GRID, 0.0, i * LEGO_GRID )
+        
+    GL.glEnd()
+    GL.glLineWidth(ls)
+    GL.glEnable(GL.GL_LIGHTING)
+    
+    GL.glPopMatrix()
+    
+def _caped_cylinder(radius,height,segments):
     global quadratic,legocaptex
     GL.glPushMatrix()
     
     GL.glRotatef(-90, 1.0, 0.0, 0.0)
     GL.glTranslatef(0.0, 0.0, -height/2.0)
     
-    #glColor3f(1.0, 0.0 , 1.0)
     #GLU.gluQuadricOrientation(quadratic, GLU.GLU_INSIDE)
     #gluDisk(quadratic,0,radius,segments,1)
     #GLU.gluQuadricOrientation(quadratic, GLU.GLU_OUTSIDE)
     
-    #GL.glColor3fv(color)
-    #GL.glBindTexture(GL.GL_TEXTURE_2D, 0)
     GLU.gluCylinder(quadratic,radius,radius,height,segments,segments)
     
     GL.glTranslatef(0.0,0.0,height)
@@ -407,7 +403,6 @@ def draw_lego_brick(width, length, height, color):
 
     
 def load_2d_texture(imageData, width, height):
-    
     texture = GL.glGenTextures(1)
     
     GL.glBindTexture(GL.GL_TEXTURE_2D, texture)
@@ -420,17 +415,3 @@ def load_2d_texture(imageData, width, height):
     
     GL.glTexImage2D(GL.GL_TEXTURE_2D, 0, GL.GL_RGBA, width, height, 0, GL.GL_RGBA, GL.GL_UNSIGNED_BYTE, imageData)
     return texture
-    
-def draw_ortho_layer(texture, color = (1.0, 1.0, 1.0), x=0, y=0, width=None, height=None):
-    global SCREEN_WIDTH, SCREEN_HEIGHT
-    if width is None: width = SCREEN_WIDTH - x
-    if height is None: height = SCREEN_HEIGHT - y
-    GL.glColor3fv(color)
-    GL.glBindTexture(GL.GL_TEXTURE_2D, texture)
-    GL.glBegin(GL.GL_QUADS)
-    GL.glTexCoord2f(0.0, 1.0); GL.glVertex2i(x,y)
-    GL.glTexCoord2f(0.0, 0.0); GL.glVertex2i(x,height)
-    GL.glTexCoord2f(1.0, 0.0); GL.glVertex2i(width,height)
-    GL.glTexCoord2f(1.0, 1.0); GL.glVertex2i(width,y)    
-    GL.glEnd()
-    
