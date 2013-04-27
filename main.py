@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python
 # coding:utf-8
 '''
 Created on 2013.04.03.
@@ -65,7 +65,8 @@ def main():
     print "Done"
     
     print "Initializing pygame ..." ,
-    pygame.init()
+    pygame.display.init()
+    pygame.font.init()
     print "Done"
     
     print "Initializing screen ...",

@@ -52,6 +52,8 @@ class piece(object):
         self.position = position
         self._position = (position[0] * LEGO_GRID, position[2] * LEGO_BIG_HEIGHT, position[1] * LEGO_GRID )
 
+        _height = LEGO_BIG_HEIGHT if self.size else LEGO_SMALL_HEIGHT
+        _length = self.bottom - self.top
         _combine = lambda _points, _vertices, _weights: _points 
             
         self.tess = GLU.gluNewTess()
@@ -60,6 +62,55 @@ class piece(object):
         GLU.gluTessCallback(self.tess,GLU.GLU_TESS_COMBINE,_combine)
         GLU.gluTessCallback(self.tess, GLU.GLU_TESS_END, GL.glEnd)
         GLU.gluTessProperty(self.tess, GLU.GLU_TESS_WINDING_RULE, GLU.GLU_TESS_WINDING_ODD)
+
+        self._gllist = GL.glGenLists(1)
+        
+        GL.glNewList(self._gllist,GL.GL_COMPILE)
+        GL.glColor3fv(self.color)
+        GL.glBindTexture(GL.GL_TEXTURE_2D,0)
+        
+        GLU.gluTessNormal(self.tess, 0.0, 1.0, 0.0)
+        GL.glNormal3f(0.0, 1.0, 0.0)
+        GLU.gluTessBeginPolygon(self.tess,None)
+        GLU.gluTessBeginContour(self.tess)
+        for i in range(0,len(self._coordinates[0])):
+            vertex =  (self._coordinates[0][i]*LEGO_GRID, _height, self._coordinates[1][i-1]*LEGO_GRID)
+            GLU.gluTessVertex(self.tess, vertex, vertex)
+            vertex =  (self._coordinates[0][i]*LEGO_GRID, _height, self._coordinates[1][i]*LEGO_GRID)
+            GLU.gluTessVertex(self.tess, vertex, vertex)
+        GLU.gluTessEndContour(self.tess)
+        GLU.gluTessEndPolygon(self.tess)
+        
+        
+        normalx = np.array((1.0, 0.0, 0.0))
+        normalz = np.array((0.0, 0.0, 1.0))
+        
+        for i in range(0,len(self._coordinates[0])):
+            GL.glNormal3fv(np.sign(self.sides[2*i])*normalz)
+            GL.glBegin(GL.GL_QUADS)
+            GL.glVertex3f( self._coordinates[0][i] * LEGO_GRID, _height, self._coordinates[1][i-1] * LEGO_GRID)
+            GL.glVertex3f( self._coordinates[0][i] * LEGO_GRID, _height, self._coordinates[1][i]   * LEGO_GRID)
+            GL.glVertex3f( self._coordinates[0][i] * LEGO_GRID, 0.0,     self._coordinates[1][i]   * LEGO_GRID)
+            GL.glVertex3f( self._coordinates[0][i] * LEGO_GRID, 0.0,     self._coordinates[1][i-1] * LEGO_GRID)
+            GL.glEnd()
+            GL.glNormal3fv(np.sign(self.sides[2*i+1])*normalx)
+            GL.glBegin(GL.GL_QUADS)
+            GL.glVertex3f( self._coordinates[0][i]   * LEGO_GRID, 0.0,     self._coordinates[1][i-1] * LEGO_GRID )
+            GL.glVertex3f( self._coordinates[0][i-1] * LEGO_GRID, 0.0,     self._coordinates[1][i-1] * LEGO_GRID )
+            GL.glVertex3f( self._coordinates[0][i-1] * LEGO_GRID, _height, self._coordinates[1][i-1] * LEGO_GRID )
+            GL.glVertex3f( self._coordinates[0][i]   * LEGO_GRID, _height, self._coordinates[1][i-1] * LEGO_GRID )
+            GL.glEnd()
+            
+        GL.glTranslatef( self.left*LEGO_GRID + LEGO_GRID/2.0, (LEGO_BUMP_HEIGHT+_height)/2.0 , self.bottom*LEGO_GRID - LEGO_GRID/2.0 )
+        for i in range( self.left+1, self.right+1 ):
+            for j in range( self.bottom+1, self.top+1 ):
+                GL.glTranslatef( 0.0, 0.0, LEGO_GRID )
+                if self.is_hit( (i,j) ):
+                    _caped_cylinder( LEGO_BUMP_RADIUS, _height+LEGO_BUMP_HEIGHT, self.color, 32 )
+            GL.glTranslatef( 0.0, 0.0, _length*LEGO_GRID )
+            GL.glTranslatef( LEGO_GRID, 0.0, 0.0 )
+        GL.glEndList()
+
 
     def __del__(self):
         if hasattr(self,'tess'):
@@ -131,56 +182,11 @@ class piece(object):
         return odd
     
     def draw(self):
-        _height = LEGO_BIG_HEIGHT if self.size else LEGO_SMALL_HEIGHT
-        _length = self.bottom - self.top
-        x = self._coordinates[0]
-        z = self._coordinates[1]
-        
         GL.glPushMatrix()
+        
         GL.glTranslatef(*self._position)
-        GL.glColor3fv(self.color)
-        GL.glBindTexture(GL.GL_TEXTURE_2D,0)
+        GL.glCallList(self._gllist)
         
-        GLU.gluTessNormal(self.tess, 0.0, 1.0, 0.0)
-        GL.glNormal3f(0.0, 1.0, 0.0)
-        GLU.gluTessBeginPolygon(self.tess,None)
-        GLU.gluTessBeginContour(self.tess)
-        for i in range(0,len(x)):
-            vertex =  (x[i]*LEGO_GRID, _height, z[i-1]*LEGO_GRID)
-            GLU.gluTessVertex(self.tess, vertex, vertex)
-            vertex =  (x[i]*LEGO_GRID, _height, z[i]*LEGO_GRID)
-            GLU.gluTessVertex(self.tess, vertex, vertex)
-        GLU.gluTessEndContour(self.tess)
-        GLU.gluTessEndPolygon(self.tess)
-        
-        
-        normalx = np.array((1.0, 0.0, 0.0))
-        normalz = np.array((0.0, 0.0, 1.0))
-        
-        for i in range(0,len(x)):
-            GL.glNormal3fv(np.sign(self.sides[2*i])*normalz)
-            GL.glBegin(GL.GL_QUADS)
-            GL.glVertex3f( x[i] * LEGO_GRID, _height, z[i-1] * LEGO_GRID)
-            GL.glVertex3f( x[i] * LEGO_GRID, _height, z[i]   * LEGO_GRID)
-            GL.glVertex3f( x[i] * LEGO_GRID, 0.0,     z[i]   * LEGO_GRID)
-            GL.glVertex3f( x[i] * LEGO_GRID, 0.0,     z[i-1] * LEGO_GRID)
-            GL.glEnd()
-            GL.glNormal3fv(np.sign(self.sides[2*i+1])*normalx)
-            GL.glBegin(GL.GL_QUADS)
-            GL.glVertex3f( x[i]   * LEGO_GRID, 0.0,     z[i-1] * LEGO_GRID )
-            GL.glVertex3f( x[i-1] * LEGO_GRID, 0.0,     z[i-1] * LEGO_GRID )
-            GL.glVertex3f( x[i-1] * LEGO_GRID, _height, z[i-1] * LEGO_GRID )
-            GL.glVertex3f( x[i]   * LEGO_GRID, _height, z[i-1] * LEGO_GRID )
-            GL.glEnd()
-            
-        GL.glTranslatef( self.left*LEGO_GRID + LEGO_GRID/2.0, (LEGO_BUMP_HEIGHT+_height)/2.0 , self.bottom*LEGO_GRID - LEGO_GRID/2.0 )
-        for i in range( self.left+1, self.right+1 ):
-            for j in range( self.bottom+1, self.top+1 ):
-                GL.glTranslatef( 0.0, 0.0, LEGO_GRID )
-                if self.is_hit( (i,j) ):
-                    _caped_cylinder( LEGO_BUMP_RADIUS, _height+LEGO_BUMP_HEIGHT, self.color, 32 )
-            GL.glTranslatef( 0.0, 0.0, _length*LEGO_GRID )
-            GL.glTranslatef( LEGO_GRID, 0.0, 0.0 )
         GL.glPopMatrix()
 
 def draw_grid():
