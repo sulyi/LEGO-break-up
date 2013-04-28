@@ -12,7 +12,7 @@ try:
     import numpy as np
     
     import OpenGL.GL as GL
-    import OpenGL.GLU as GLU  
+#    import OpenGL.GLU as GLU  
 except ImportError:
     with open('README.md', 'r') as markdown:
         for line in markdown:
@@ -42,6 +42,7 @@ class layer_manager(object):
         self.layer_list = None
     
     def add( self, tex, x, y, xscale=0, yscale=0 ):
+        tex = growPOT(tex)
         width = tex.get_width()
         height = tex.get_height()
         self._image_list.append(( tex, width, height, x, y, x+width+xscale, y+height+yscale ))
@@ -52,6 +53,10 @@ class layer_manager(object):
         for i,tex in enumerate( self._image_list ):
             self.layer_list.append(( lego.load_2d_texture( pygame.image.tostring(tex[0], 'RGBA', True), tex[1], tex[2], first+i ),
                                   tex[3], tex[4], tex[5], tex[6] ))
+    
+    def draw(self):
+        for i in self.layer_list:
+            draw_ortho_layer(*i)
 
 def growPOT(surface):
     powers_of_two = (1,2,4,8,16,32,64,256,512,1024,2048,4096) # further are out of HD
@@ -125,7 +130,7 @@ def main():
     
     layers = layer_manager()
     
-    image = growPOT( pygame.image.load(os.path.join('data','ui.png')))
+    image = pygame.image.load(os.path.join('data','ui.png'))
     layers.add( image, 0, 0, 0, 0 )
     
     title = pygame.font.SysFont("courier", 24, True, True)
@@ -134,15 +139,12 @@ def main():
     text_color = ( 192, 64, 128 )
     
     text = title.render( po["position"], True, text_color )
-    text = growPOT(text)
     layers.add( text, 20, 10, 0, title_scale )
     
     text = title.render( po["height"], True, text_color )
-    text = growPOT(text)
     layers.add( text, 20, 225, 0, title_scale)
 
     text = title.render( po["big"], True, text_color )
-    text = growPOT(text)
     layers.add( text, 20, 265, 0, sub_scale )
     
     layers.load()
@@ -169,12 +171,13 @@ def main():
     m_blur_f = 0.4
     rotating = False # TODO: Free the camera
     rotx = 0
-    roty = -40
-    mouse_sens = 120
+    roty = -40.0
+    mouse_sens = -120
     rot_speed = 1.5
     position = np.array(( 2.0, -15, 15, 0.0))
     move = np.array(( 0.0, 0.0, 0.0, 0.0))
     move_speed = 0.5
+    slow = False
     
     focused = None
     mouse_hit = None
@@ -188,37 +191,48 @@ def main():
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     running=False
+                if not slow and event.key == 304:
+                    mouse_sens = -60
+                    slow = True
+                    move_speed = 0.1
                 if event.mod % 256 == 64 or event.key == 306:
-                    move[1] =  move_speed
+                    move[1] =  1.0
                 elif event.key == 32:
-                    move[1] = -move_speed
+                    move[1] = -1.0
                 elif event.key == pygame.K_a or event.key == pygame.K_LEFT:
-                    move[0] =  move_speed
+                    move[0] =  1.0
                 elif event.key == pygame.K_d or event.key == pygame.K_RIGHT:
-                    move[0] = -move_speed
+                    move[0] = -1.0
                 elif event.key == pygame.K_s or event.key == pygame.K_DOWN:
-                    move[2] =  move_speed
+                    move[2] =  1.0
                 elif event.key == pygame.K_w or event.key == pygame.K_UP:
-                    move[2] = -move_speed
+                    move[2] = -1.0
                 else:
                     try:
                         key_hit = int (event.unicode)
                     except ValueError:
                         pass
+                print move, event.mod,event.key
             elif event.type == pygame.KEYUP:
-                if ( event.key == pygame.K_a or event.key == pygame.K_LEFT or 
+                if event.mod % 256 == 64 or event.key == 306 or event.key == 32:
+                    move[1] = 0.0
+                elif ( event.key == pygame.K_a or event.key == pygame.K_LEFT or 
                      event.key == pygame.K_d or event.key == pygame.K_RIGHT   ):
                     move[0] = 0.0
                 elif ( event.key == pygame.K_s or event.key == pygame.K_DOWN or
                        event.key == pygame.K_w or event.key == pygame.K_UP    ): 
                     move[2] = 0.0
-                elif event.mod % 256 == 64 or event.key == 306 or event.key == 32:
-                    move[1] = 0.0
-            elif event.type == pygame.MOUSEBUTTONDOWN:
+                if slow and event.key == 304:
+                    slow = False
+                    mouse_sens = -120
+                    move_speed = 0.5
+                print move, event.mod,event.key
+                    
+            elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 mouse_down = True
             elif mouse_down and event.type == pygame.MOUSEMOTION:
-                rotx += float(event.rel[0])/window_width  * mouse_sens * -1
-                roty += float(event.rel[1])/window_height * mouse_sens * -1
+                rotx += float(event.rel[0])/window_width  * mouse_sens
+                roty += float(event.rel[1])/window_height * mouse_sens
             elif event.type == pygame.MOUSEBUTTONUP and event.button == 1:
                 mouse_down = False
                 mouse_hit = event.pos
@@ -245,11 +259,7 @@ def main():
         # draw 3D stuff
         
         GL.glCallList(lego.L_DRAW_3D)
-#    gluLookAt(0.0, 0.0, -6.0,
-#              0.0, 0.0, 0.0,
-#              0.0, 0.0, 1.0
-#              )
-        #GL.glRotatef( rotx, 0.0, 1.0, 0.0 )
+        
         xrot = np.array(( (np.cos(rotx/180*np.pi), 0.0, -np.sin(rotx/180*np.pi), 0.0), 
                           (0.0,                    1.0,  0.0,                    0.0),
                           (np.sin(rotx/180*np.pi), 0.0,  np.cos(rotx/180*np.pi), 0.0),
@@ -258,20 +268,14 @@ def main():
                           (0.0,  np.cos(roty/180*np.pi), np.sin(roty/180*np.pi), 0.0),
                           (0.0, -np.sin(roty/180*np.pi), np.cos(roty/180*np.pi), 0.0),
                           (0.0,  0.0,                    0.0,                    1.0) ))
+        if not np.array_equal(move, np.array((0.0,0.0,0.0,0.0))):
+            move = move_speed * move / np.sqrt( move ** 2 ).sum()
         position += np.dot(xrot,np.dot(yrot,move))
-        rot = np.dot(xrot,np.array((1.0,0.0,0.0,0.0)))
-        GL.glRotatef(rotx,0.0,1.0,0.0)
-        GL.glRotatef(roty, *rot[:-1])
-        GL.glTranslatef(*position[:-1])
+        pos = np.vstack((np.zeros((3,4)),position))
         
-        #GL.glMultMatrixf(yrot)
-        #rot = np.dot(rot , np.array((1.0, 0.0, 0.0)))
-        #GL.glRotatef(roty, 1.0, 0.0, 0.0)
-        
-        
-        
-        
-        
+        GL.glMultMatrixf(yrot)
+        GL.glMultMatrixf(xrot)
+        GL.glMultMatrixf(np.eye(4) + pos)
         
         GL.glLightfv( GL.GL_LIGHT0, GL.GL_POSITION, -1 * lightp)
         
@@ -297,8 +301,7 @@ def main():
         GL.glPushMatrix()
         GL.glCallList(lego.L_DRAW_2D)
         
-        for i in layers.layer_list:
-            draw_ortho_layer(*i)
+        layers.draw()
         
         for b in  buttons:
             b.draw( b is focused )
