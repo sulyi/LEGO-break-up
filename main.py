@@ -21,7 +21,7 @@ except ImportError:
 import lego
 
 class button(pygame.Rect):
-    def __init__( self, x, y, width, height, color, focus_color, value ):
+    def __init__( self, x, y, width, height, color, focus_color, value = None ):
         super( button, self ).__init__( x, y, width, height )
         self.color = color
         self.focus_color = focus_color
@@ -40,6 +40,7 @@ class layer_manager(object):
     def __init__(self):
         self._image_list = list()
         self.layer_list = None
+        self.position = None
     
     def add( self, tex, x, y, xscale=0, yscale=0 ):
         tex = growPOT(tex)
@@ -47,17 +48,24 @@ class layer_manager(object):
         height = tex.get_height()
         self._image_list.append(( tex, width, height, x, y, x+width+xscale, y+height+yscale ))
         
-    def load(self):
+    def load( self ):
         self.layer_list = list()
         first = GL.glGenLists(len(self._image_list))
         for i,tex in enumerate( self._image_list ):
             self.layer_list.append(( lego.load_2d_texture( pygame.image.tostring(tex[0], 'RGBA', True), tex[1], tex[2], first+i ),
                                   tex[3], tex[4], tex[5], tex[6] ))
+        self.position = 0
     
-    def draw(self):
-        for i in self.layer_list:
+    def draw( self, n=None ):
+        if n is not None:
+            n += self.position
+        for i in self.layer_list[self.position:n]:
             draw_ortho_layer(*i)
-
+        if n == len(self.layer_list) or n is None:
+            self.position = 0
+        else:
+            self.position = n
+        
 def growPOT(surface):
     powers_of_two = (1,2,4,8,16,32,64,256,512,1024,2048,4096) # further are out of HD
     if not isinstance(surface, pygame.Surface):
@@ -87,7 +95,7 @@ def draw_ortho_layer(texture, x=0, y=0, width=None, height=None, color = (1.0, 1
     GL.glTexCoord2f(1.0, 0.0); GL.glVertex2i(width,height)
     GL.glTexCoord2f(1.0, 1.0); GL.glVertex2i(width,y)    
     GL.glEnd()
-
+    
 def main():
     initial_brick_width = 2
     initial_brick_length = 3
@@ -121,31 +129,36 @@ def main():
     
     # draw dialog screen 
     
-    width_btn=button( 60,115, 100,100, (0.8, 0.8, 0.0), (0.3, 0.8, 0.5), initial_brick_width )
-    length_btn=button( 60,330, 100,100, (0.8, 0.8, 0.0), (0.3, 0.8, 0.5) , initial_brick_length )
-    
-    buttons = [ width_btn, length_btn ]
-                  
     print "Loading layers ...",
+    buttons = list()
     
+    buttons.append( button(  27, 57,  45, 50, (0.8, 0.8, 0.0), (0.3, 0.8, 0.5) ))
+    buttons.append( button(  85, 57,  45, 50, (0.8, 0.8, 0.0), (0.3, 0.8, 0.5) ))
+    buttons.append( button( 143, 57,  45, 50, (0.8, 0.8, 0.0), (0.3, 0.8, 0.5) ))
+    buttons.append( button(  27,190,  45, 50, (0.8, 0.8, 0.0), (0.3, 0.8, 0.5) ))
+    buttons.append( button( 143,190,  45, 50, (0.8, 0.8, 0.0), (0.3, 0.8, 0.5) ))
+    buttons.append( button(  27,295, 161,100, (0.8, 0.8, 0.0), (0.3, 0.8, 0.5) ))
+    buttons.append( button( 143,410,  45, 50, (0.8, 0.8, 0.0), (0.3, 0.8, 0.5) ))
+    buttons.append( button(  27,490,  45, 50, (0.8, 0.8, 0.0), (0.3, 0.8, 0.5) ))
+    buttons.append( button( 143,490,  45, 50, (0.8, 0.8, 0.0), (0.3, 0.8, 0.5) ))
+    buttons.append( button(  27,550, 161, 50, (0.8, 0.8, 0.0), (0.3, 0.8, 0.5) ))
     layers = layer_manager()
     
-    image = pygame.image.load(os.path.join('data','ui.png'))
-    layers.add( image, 0, 0, 0, 0 )
+    layers.add( pygame.image.load(os.path.join('data','ui.png')), 0, 0, 0, 0 )
     
     title = pygame.font.SysFont("courier", 24, True, True)
     title_scale = 15
     sub_scale = -5
     text_color = ( 192, 64, 128 )
     
-    text = title.render( po["position"], True, text_color )
-    layers.add( text, 20, 10, 0, title_scale )
-    
-    text = title.render( po["height"], True, text_color )
-    layers.add( text, 20, 225, 0, title_scale)
-
-    text = title.render( po["big"], True, text_color )
-    layers.add( text, 20, 265, 0, sub_scale )
+    layers.add( title.render( po["position"], True, text_color ), 20, 10, 0, title_scale )
+    layers.add( title.render( po["height"], True, text_color ), 20, 117, 0, title_scale)
+    layers.add( title.render( po["big"], True, text_color ), 20, 155, 0, sub_scale )
+    layers.add( title.render( po["small"], True, text_color ), 130, 155, 0, sub_scale )
+    layers.add( title.render( po["sides"], True, text_color ), 20, 250, 0, title_scale)
+    layers.add( title.render( po["grid"], True, text_color ), 20, 415, 0, title_scale)
+    layers.add( title.render( "X", True, text_color ), 100, 490, 0, title_scale)
+    layers.add( title.render( "OK", True, text_color ), 90, 555, 0, title_scale)
     
     layers.load()
     
@@ -212,7 +225,6 @@ def main():
                         key_hit = int (event.unicode)
                     except ValueError:
                         pass
-                print move, event.mod,event.key
             elif event.type == pygame.KEYUP:
                 if event.mod % 256 == 64 or event.key == 306 or event.key == 32:
                     move[1] = 0.0
@@ -226,7 +238,6 @@ def main():
                     slow = False
                     mouse_sens = -120
                     move_speed = 0.5
-                print move, event.mod,event.key
                     
             elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 mouse_down = True
@@ -301,7 +312,7 @@ def main():
         GL.glPushMatrix()
         GL.glCallList(lego.L_DRAW_2D)
         
-        layers.draw()
+        layers.draw(1)
         
         for b in  buttons:
             b.draw( b is focused )
@@ -317,6 +328,7 @@ def main():
         
         key_hit = None
         
+        layers.draw()
         
         GL.glPopMatrix()
         

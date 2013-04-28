@@ -267,6 +267,8 @@ def draw_grid():
     ls = GL.glGetFloat(GL.GL_LINE_WIDTH)
     GL.glLineWidth(3.0)
     GL.glColor3f(0.2, 0.5, 0.5)
+    GL.glBindTexture(GL.GL_TEXTURE_2D, 0)
+    
     GL.glBegin(GL.GL_LINES)
     
     half_interval = 10
