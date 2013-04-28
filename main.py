@@ -21,8 +21,8 @@ except ImportError:
 import lego
 
 class button(pygame.Rect):
-    def __init__(self, x, y, width, height, color, focus_color, value ):
-        super(button, self ).__init__( x, y, width, height )
+    def __init__( self, x, y, width, height, color, focus_color, value ):
+        super( button, self ).__init__( x, y, width, height )
         self.color = color
         self.focus_color = focus_color
         self.value = value
@@ -32,8 +32,25 @@ class button(pygame.Rect):
         GL.glBindTexture(GL.GL_TEXTURE_2D, 0)
         GL.glRectiv( self.topleft, self.bottomright )
         
-    def is_hit_by(self, point):
+    def is_hit_by( self, point ):
         return self.contains(pygame.Rect( point, (0,0) ))
+
+class layer_manager(object):
+    def __init__(self):
+        self._image_list = list()
+        self.layer_list = None
+    
+    def add( self, tex, x, y, xscale=0, yscale=0 ):
+        width = tex.get_width()
+        height = tex.get_height()
+        self._image_list.append(( tex, width, height, x, y, x+width+xscale, y+height+yscale ))
+        
+    def load(self):
+        self.layer_list = list()
+        first = GL.glGenLists(len(self._image_list))
+        for i,tex in enumerate( self._image_list ):
+            self.layer_list.append(( lego.load_2d_texture( pygame.image.tostring(tex[0], 'RGBA', True), tex[1], tex[2], first+i ),
+                                  tex[3], tex[4], tex[5], tex[6] ))
 
 def growPOT(surface):
     powers_of_two = (1,2,4,8,16,32,64,256,512,1024,2048,4096) # further are out of HD
@@ -102,54 +119,29 @@ def main():
                   
     print "Loading textures ...",
     
-    textures = list()
+    textures = layer_manager()
     
-    _image = growPOT( pygame.image.load(os.path.join('data','ui.png')))
-    
-    width = _image.get_width()
-    height = _image.get_height()
-    
-# TODO: textured Rect class (note growPOT)
-    
-    textures.append(( lego.load_2d_texture(pygame.image.tostring(_image, "RGBA", True),
-                      width , height), 0, 0, width, height ))
+    image = growPOT( pygame.image.load(os.path.join('data','ui.png')))
+    textures.add( image, 0, 0, 0, 0 )
     
     title = pygame.font.SysFont("courier", 24, True, True)
     title_scale = 15
     sub_scale = -5
-    text_color = (192, 64, 128)
-    
-# TODO: text renderer class
+    text_color = ( 192, 64, 128 )
     
     text = title.render( po["position"], True, text_color )
     text = growPOT(text)
-    
-    width = text.get_width()
-    height = text.get_height()
-    x = 20
-    y = 10
-    textures.append(( lego.load_2d_texture( pygame.image.tostring(text, 'RGBA', True), 
-                                            width, height ), x, y, x+width, y+height+title_scale ))
+    textures.add( text, 20, 10, 0, title_scale )
     
     text = title.render( po["height"], True, text_color )
     text = growPOT(text)
-    
-    width = text.get_width()
-    height = text.get_height()
-    x = 20
-    y = 225
-    textures.append(( lego.load_2d_texture( pygame.image.tostring(text, 'RGBA', True), 
-                                            width, height ), x, y, x+width, y+height+title_scale ))
-    
+    textures.add( text, 20, 225, 0, title_scale)
+
     text = title.render( po["big"], True, text_color )
     text = growPOT(text)
+    textures.add( text, 20, 265, 0, sub_scale )
     
-    width = text.get_width()
-    height = text.get_height()
-    x = 20
-    y = 265
-    textures.append(( lego.load_2d_texture( pygame.image.tostring(text, 'RGBA', True), 
-                                            width, height ), x, y, x+width, y+height+sub_scale ))
+    textures.load()
     
     print "Done"
     
@@ -232,8 +224,7 @@ def main():
         GL.glVertex3fv( lightp[:3] - np.array((0.1, 0.1, 0.1)) )
         GL.glEnd()
         GL.glPointSize(ps)
-        
-# TODO: add height_btn, change height argument
+            
 
         test_1.draw()
         test_2.draw()
@@ -246,7 +237,7 @@ def main():
         GL.glPushMatrix()
         GL.glCallList(lego.L_DRAW_2D)
         
-        for i in textures:
+        for i in textures.layer_list:
             draw_ortho_layer(*i)
         
         for b in  buttons:

@@ -402,8 +402,9 @@ def draw_lego_brick(width, length, height, color):
     GL.glPopMatrix()
 
     
-def load_2d_texture(imageData, width, height):
-    texture = GL.glGenTextures(1)
+def load_2d_texture(imageData, width, height, texture=None ):
+    if texture is None:
+        texture = GL.glGenTextures(1)
     
     GL.glBindTexture(GL.GL_TEXTURE_2D, texture)
     
