@@ -12,7 +12,7 @@ try:
     import numpy as np
     
     import OpenGL.GL as GL
-#   import OpenGL.GLU as GLU  
+    import OpenGL.GLU as GLU  
 except ImportError:
     with open('README.md', 'r') as markdown:
         for line in markdown:
@@ -33,6 +33,7 @@ class button(pygame.Rect):
         GL.glRectiv( self.topleft, self.bottomright )
         
     def is_hit_by( self, point ):
+        # TODO: let opengl do this (different shaped ones)
         return self.contains(pygame.Rect( point, (0,0) ))
 
 class layer_manager(object):
@@ -87,6 +88,9 @@ def main():
     initial_brick_length = 3
     initial_brick_height = lego.LEGO_BIG
     
+    window_width = 800
+    window_height = 600
+    
     print "Initializing locale ...",
     gettext.install('default', 'locale')
     po = { "position":  _("Position"), "height" : _("Height"), "big" :  _("Big"), "small" : _("Small"), 
@@ -101,7 +105,7 @@ def main():
     print "Done"
     
     print "Initializing screen ...",
-    pygame.display.set_mode ((800,600), pygame.OPENGL|pygame.DOUBLEBUF, 24)
+    pygame.display.set_mode ((window_width,window_height), pygame.OPENGL|pygame.DOUBLEBUF, 24)
     
     print "Done"
     
@@ -117,12 +121,12 @@ def main():
     
     buttons = [ width_btn, length_btn ]
                   
-    print "Loading textures ...",
+    print "Loading layers ...",
     
-    textures = layer_manager()
+    layers = layer_manager()
     
     image = growPOT( pygame.image.load(os.path.join('data','ui.png')))
-    textures.add( image, 0, 0, 0, 0 )
+    layers.add( image, 0, 0, 0, 0 )
     
     title = pygame.font.SysFont("courier", 24, True, True)
     title_scale = 15
@@ -131,17 +135,17 @@ def main():
     
     text = title.render( po["position"], True, text_color )
     text = growPOT(text)
-    textures.add( text, 20, 10, 0, title_scale )
+    layers.add( text, 20, 10, 0, title_scale )
     
     text = title.render( po["height"], True, text_color )
     text = growPOT(text)
-    textures.add( text, 20, 225, 0, title_scale)
+    layers.add( text, 20, 225, 0, title_scale)
 
     text = title.render( po["big"], True, text_color )
     text = growPOT(text)
-    textures.add( text, 20, 265, 0, sub_scale )
+    layers.add( text, 20, 265, 0, sub_scale )
     
-    textures.load()
+    layers.load()
     
     print "Done"
     
@@ -155,34 +159,68 @@ def main():
     
     lightp = np.array((2.0, 4.0, -4.0, 1.0))
     
-    rot_speed = 1.5
-    rot = 0
     ticker = pygame.time.Clock()
+    
+    
     running = True
-    rotating = False
-    focused = None
-    mouse_hit = None
-    key_hit = None
+    fps = 30
     motionblur = False
     accumulate = False
-    fps = 30
+    m_blur_f = 0.4
+    rotating = False # TODO: Free the camera
+    rotx = 0
+    roty = -40
+    mouse_sens = 120
+    rot_speed = 1.5
+    position = np.array(( 2.0, -15, 15, 0.0))
+    move = np.array(( 0.0, 0.0, 0.0, 0.0))
+    move_speed = 0.5
+    
+    focused = None
+    mouse_hit = None
+    mouse_down = False
+    key_hit = None
     
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
             elif event.type == pygame.KEYDOWN:
-                if event.key == 27 or ( event.mod % 256 == 64 and (event.key == 113 or event.key == 100 or event.key == 120) ):
+                if event.key == pygame.K_ESCAPE:
                     running=False
-                if event.mod % 256 == 0:
-                    if event.key == 32:
-                        rotating = not rotating
-                    else:
-                        try:
-                            key_hit = int (event.unicode)
-                        except ValueError:
-                            pass 
+                if event.mod % 256 == 64 or event.key == 306:
+                    move[1] =  move_speed
+                elif event.key == 32:
+                    move[1] = -move_speed
+                elif event.key == pygame.K_a or event.key == pygame.K_LEFT:
+                    move[0] =  move_speed
+                elif event.key == pygame.K_d or event.key == pygame.K_RIGHT:
+                    move[0] = -move_speed
+                elif event.key == pygame.K_s or event.key == pygame.K_DOWN:
+                    move[2] =  move_speed
+                elif event.key == pygame.K_w or event.key == pygame.K_UP:
+                    move[2] = -move_speed
+                else:
+                    try:
+                        key_hit = int (event.unicode)
+                    except ValueError:
+                        pass
+            elif event.type == pygame.KEYUP:
+                if ( event.key == pygame.K_a or event.key == pygame.K_LEFT or 
+                     event.key == pygame.K_d or event.key == pygame.K_RIGHT   ):
+                    move[0] = 0.0
+                elif ( event.key == pygame.K_s or event.key == pygame.K_DOWN or
+                       event.key == pygame.K_w or event.key == pygame.K_UP    ): 
+                    move[2] = 0.0
+                elif event.mod % 256 == 64 or event.key == 306 or event.key == 32:
+                    move[1] = 0.0
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                mouse_down = True
+            elif mouse_down and event.type == pygame.MOUSEMOTION:
+                rotx += float(event.rel[0])/window_width  * mouse_sens * -1
+                roty += float(event.rel[1])/window_height * mouse_sens * -1
             elif event.type == pygame.MOUSEBUTTONUP and event.button == 1:
+                mouse_down = False
                 mouse_hit = event.pos
         
         if motionblur:
@@ -190,28 +228,50 @@ def main():
                 pygame.display.flip()
                 GL.glClear(GL.GL_COLOR_BUFFER_BIT|GL.GL_DEPTH_BUFFER_BIT)
             else:
-                m_blur_f = 0.4
                 GL.glAccum(GL.GL_ACCUM,m_blur_f)
                 GL.glAccum(GL.GL_RETURN, 1.0)
                 GL.glAccum(GL.GL_MULT,1.0 - m_blur_f)
             accumulate = not accumulate
             ticker.tick(2*fps)
             if rotating:
-                rot = (rot + rot_speed/2) % 360
+                rotx = (rotx + rot_speed/2) % 360
         else:
             pygame.display.flip()
             GL.glClear(GL.GL_COLOR_BUFFER_BIT|GL.GL_DEPTH_BUFFER_BIT)
             ticker.tick(fps)
             if rotating:
-                rot = (rot + rot_speed) % 360
+                rotx = (rotx + rot_speed) % 360
         
         # draw 3D stuff
         
         GL.glCallList(lego.L_DRAW_3D)
+#    gluLookAt(0.0, 0.0, -6.0,
+#              0.0, 0.0, 0.0,
+#              0.0, 0.0, 1.0
+#              )
+        #GL.glRotatef( rotx, 0.0, 1.0, 0.0 )
+        xrot = np.array(( (np.cos(rotx/180*np.pi), 0.0, -np.sin(rotx/180*np.pi), 0.0), 
+                          (0.0,                    1.0,  0.0,                    0.0),
+                          (np.sin(rotx/180*np.pi), 0.0,  np.cos(rotx/180*np.pi), 0.0),
+                          (0.0,                    0.0,  0.0,                    1.0) ))
+        yrot = np.array(( (1.0,  0.0,                    0.0,                    0.0), 
+                          (0.0,  np.cos(roty/180*np.pi), np.sin(roty/180*np.pi), 0.0),
+                          (0.0, -np.sin(roty/180*np.pi), np.cos(roty/180*np.pi), 0.0),
+                          (0.0,  0.0,                    0.0,                    1.0) ))
+        position += np.dot(xrot,np.dot(yrot,move))
+        rot = np.dot(xrot,np.array((1.0,0.0,0.0,0.0)))
+        GL.glRotatef(rotx,0.0,1.0,0.0)
+        GL.glRotatef(roty, *rot[:-1])
+        GL.glTranslatef(*position[:-1])
         
-        GL.glTranslatef(2.0,0.2,15)
-        GL.glRotatef(  -40, 1.0, 0.0, 0.0 )
-        GL.glRotatef( rot, 0.0, 1.0, 0.0 )
+        #GL.glMultMatrixf(yrot)
+        #rot = np.dot(rot , np.array((1.0, 0.0, 0.0)))
+        #GL.glRotatef(roty, 1.0, 0.0, 0.0)
+        
+        
+        
+        
+        
         
         GL.glLightfv( GL.GL_LIGHT0, GL.GL_POSITION, -1 * lightp)
         
@@ -237,7 +297,7 @@ def main():
         GL.glPushMatrix()
         GL.glCallList(lego.L_DRAW_2D)
         
-        for i in textures.layer_list:
+        for i in layers.layer_list:
             draw_ortho_layer(*i)
         
         for b in  buttons:

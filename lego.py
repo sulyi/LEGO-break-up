@@ -110,8 +110,7 @@ class piece(object):
 
     def __del__(self):
         if hasattr(self,'tess'):
-        # checking this might be speared with rearrangement of init
-        # but where's the fun in that ?
+        # checking this might be speared, but shit happens ?
             GLU.gluDeleteTess(self.tess)
                 
     @property
@@ -229,10 +228,6 @@ def gl_init(width, height):
     GL.glLoadIdentity()
     GLU.gluPerspective(45.0, float(width)/float(height), 0.1, 100.0)
     
-#    gluLookAt(0.0, 0.0, -6.0,
-#              0.0, 0.0, 0.0,
-#              0.0, 0.0, 1.0
-#              )
     GL.glMatrixMode(GL.GL_MODELVIEW)
     GL.glLoadIdentity()
     GL.glScale( 1.0, 1.0, -1.0 )
