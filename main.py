@@ -5,7 +5,7 @@ Created on 2013.04.03.
 
 @author: arsene
 '''
-import os,gettext
+import sys,os,gettext
 
 try:
     import pygame
@@ -14,93 +14,16 @@ try:
     import OpenGL.GL as GL
 #    import OpenGL.GLU as GLU  
 except ImportError:
-    with open('README.md', 'r') as markdown:
+    with open( 'README.md', 'r' ) as markdown:
         for line in markdown:
             print line,
-    exit(1) 
+    sys.exit(1)
+    
 import lego
+import gui
 
-class button(pygame.Rect):
-    def __init__( self, x, y, width, height, color, focus_color, value = None ):
-        super( button, self ).__init__( x, y, width, height )
-        self.color = color
-        self.focus_color = focus_color
-        self.value = value
-        
-    def draw( self, focused = False ):
-        GL.glColor3fv( self.color if not focused else self.focus_color)
-        GL.glBindTexture(GL.GL_TEXTURE_2D, 0)
-        GL.glRectiv( self.topleft, self.bottomright )
-        
-    def is_hit_by( self, point ):
-        # TODO: let opengl do this (different shaped ones)
-        return self.contains(pygame.Rect( point, (0,0) ))
 
-class layer_manager(object):
-    def __init__(self):
-        self._image_list = list()
-        self.layer_list = None
-        self.position = None
-    
-    def add( self, tex, x, y, xscale=0, yscale=0 ):
-        tex = growPOT(tex)
-        width = tex.get_width()
-        height = tex.get_height()
-        self._image_list.append(( tex, width, height, x, y, x+width+xscale, y+height+yscale ))
-        
-    def load( self ):
-        self.layer_list = list()
-        first = GL.glGenLists(len(self._image_list))
-        for i,tex in enumerate( self._image_list ):
-            self.layer_list.append(( lego.load_2d_texture( pygame.image.tostring(tex[0], 'RGBA', True), tex[1], tex[2], first+i ),
-                                  tex[3], tex[4], tex[5], tex[6] ))
-        self.position = 0
-    
-    def draw( self, n=None ):
-        if n is not None:
-            n += self.position
-        for i in self.layer_list[self.position:n]:
-            draw_ortho_layer(*i)
-        if n == len(self.layer_list) or n is None:
-            self.position = 0
-        else:
-            self.position = n
-        
-def growPOT(surface):
-    powers_of_two = (1,2,4,8,16,32,64,256,512,1024,2048,4096) # further are out of HD
-    if not isinstance(surface, pygame.Surface):
-        raise ValueError, "growPOT can only be done on a Surface (from pygame)"
-    width = surface.get_width()
-    height = surface.get_height()
-    for i in powers_of_two:
-        if width>=i:
-            break
-    for j in powers_of_two:
-        if height>=j:
-            break
-    if not ( width == powers_of_two[i] and height == powers_of_two[j] ):
-        canvas = pygame.Surface((powers_of_two[i], powers_of_two[j]),pygame.SRCALPHA)
-        surface.blit(canvas,(0,0))
-    return surface
-
-def draw_ortho_layer(texture, x=0, y=0, width=None, height=None, color = (1.0, 1.0, 1.0)):
-    if width is None: width = lego.SCREEN_WIDTH - x
-    if height is None: height = lego.SCREEN_HEIGHT - y
-    GL.glColor3fv(color)
-    GL.glBindTexture(GL.GL_TEXTURE_2D, texture)
-    
-    GL.glBegin(GL.GL_QUADS)
-    GL.glTexCoord2f(0.0, 1.0); GL.glVertex2i(x,y)
-    GL.glTexCoord2f(0.0, 0.0); GL.glVertex2i(x,height)
-    GL.glTexCoord2f(1.0, 0.0); GL.glVertex2i(width,height)
-    GL.glTexCoord2f(1.0, 1.0); GL.glVertex2i(width,y)    
-    GL.glEnd()
-    
 def main():
-    initial_brick_width = 2
-    initial_brick_length = 3
-    initial_brick_height = lego.LEGO_BIG
-    
     window_width = 800
     window_height = 600
     
@@ -119,31 +42,29 @@ def main():
     
     print "Initializing screen ...",
     pygame.display.set_mode ((window_width,window_height), pygame.OPENGL|pygame.DOUBLEBUF, 24)
-    
     print "Done"
     
     print "Initializing opengl ...",
-    
     lego.gl_init(800,600)
     print "Done"
     
     # draw dialog screen 
     
     print "Loading layers ...",
+    #FIXME: smaller gui
     buttons = list()
+    buttons.append( gui.button(  27, 57,  45, 50, (0.8, 0.8, 0.0), (0.3, 0.8, 0.5), True ))
+    buttons.append( gui.button(  85, 57,  45, 50, (0.8, 0.8, 0.0), (0.3, 0.8, 0.5), True ))
+    buttons.append( gui.button( 143, 57,  45, 50, (0.8, 0.8, 0.0), (0.3, 0.8, 0.5), True ))
+    buttons.append( gui.button(  27,190,  45, 50, (0.8, 0.8, 0.0), (0.3, 0.8, 0.5) ))
+    buttons.append( gui.button( 143,190,  45, 50, (0.8, 0.8, 0.0), (0.3, 0.8, 0.5) ))
+    buttons.append( gui.button(  27,295, 161,100, (0.8, 0.8, 0.0), (0.3, 0.8, 0.5), True ))
+    buttons.append( gui.button( 143,410,  45, 50, (0.8, 0.8, 0.0), (0.3, 0.8, 0.5) ))
+    buttons.append( gui.arrow(  27,490,   45, 50, (0.8, 0.8, 0.0), (0.3, 0.8, 0.5) ))
+    buttons.append( gui.arrow( 143,490,   45, 50, (0.8, 0.8, 0.0), (0.3, 0.8, 0.5), False ))
+    buttons.append( gui.button(  27,550, 161, 50, (0.8, 0.8, 0.0), (0.3, 0.8, 0.5) ))
     
-    buttons.append( button(  27, 57,  45, 50, (0.8, 0.8, 0.0), (0.3, 0.8, 0.5) ))
-    buttons.append( button(  85, 57,  45, 50, (0.8, 0.8, 0.0), (0.3, 0.8, 0.5) ))
-    buttons.append( button( 143, 57,  45, 50, (0.8, 0.8, 0.0), (0.3, 0.8, 0.5) ))
-    buttons.append( button(  27,190,  45, 50, (0.8, 0.8, 0.0), (0.3, 0.8, 0.5) ))
-    buttons.append( button( 143,190,  45, 50, (0.8, 0.8, 0.0), (0.3, 0.8, 0.5) ))
-    buttons.append( button(  27,295, 161,100, (0.8, 0.8, 0.0), (0.3, 0.8, 0.5) ))
-    buttons.append( button( 143,410,  45, 50, (0.8, 0.8, 0.0), (0.3, 0.8, 0.5) ))
-    buttons.append( button(  27,490,  45, 50, (0.8, 0.8, 0.0), (0.3, 0.8, 0.5) ))
-    buttons.append( button( 143,490,  45, 50, (0.8, 0.8, 0.0), (0.3, 0.8, 0.5) ))
-    buttons.append( button(  27,550, 161, 50, (0.8, 0.8, 0.0), (0.3, 0.8, 0.5) ))
-    layers = layer_manager()
-    
+    layers = gui.layer_manager()
     layers.add( pygame.image.load(os.path.join('data','ui.png')), 0, 0, 0, 0 )
     
     title = pygame.font.SysFont("courier", 24, True, True)
@@ -159,45 +80,62 @@ def main():
     layers.add( title.render( po["grid"], True, text_color ), 20, 415, 0, title_scale)
     layers.add( title.render( "X", True, text_color ), 100, 490, 0, title_scale)
     layers.add( title.render( "OK", True, text_color ), 90, 555, 0, title_scale)
-    
     layers.load()
-    
     print "Done"
     
     print "\nEntering drawing loop\n"
-    
-    test_1 = lego.piece( (4,2,-2,2,-1,1,-2,-1,-1,-2,2,-2), lego.LEGO_BIG, (1.0, 0.1, 0.2), (-6,-6,0) )
-    test_2 = lego.piece( (1,-1,1,1,1,-1,1,4,-3,-1,-1,-2), lego.LEGO_BIG, (0.2, 0.8, 0.3), (-8,2,0))
-    test_3 = lego.piece( (2,2,1,1,-1,2,-2,-5), lego.LEGO_BIG, (0.2, 0.3, 0.8), (5,1,0) )
-    test_4 = lego.piece( (3,4,-3,-1,-1,-2,1,-1), lego.LEGO_BIG, (0.8, 0.3, 0.8), (1,-2,0) )
-    test_5 = lego.piece( (2,7,-2,-5,-2,-1,2,-1), lego.LEGO_SMALL, (0.8, 0.8, 0.3), (0,0,1) )
+    pieces = list()
+    pieces.append(lego.piece( (4,2,-2,2,-1,1,-2,-1,-1,-2,2,-2), lego.LEGO_BIG,   (1.0, 0.1, 0.2), (-6,-6,0) ))
+    pieces.append(lego.piece( (1,-1,1,1,1,-1,1,4,-3,-1,-1,-2),  lego.LEGO_BIG,   (0.2, 0.8, 0.3), (-8, 2,0) ))
+    pieces.append(lego.piece( (2,2,1,1,-1,2,-2,-5),             lego.LEGO_BIG,   (0.2, 0.3, 0.8), ( 5, 1,0) ))
+    pieces.append(lego.piece( (3,4,-3,-1,-1,-2,1,-1),           lego.LEGO_BIG,   (0.8, 0.3, 0.8), ( 1,-2,0) ))
+    pieces.append(lego.piece( (2,7,-2,-5,-2,-1,2,-1),           lego.LEGO_SMALL, (0.9, 0.9, 0.3), ( 0, 0,1) ))
     
     lightp = np.array((2.0, 4.0, -4.0, 1.0))
     
     ticker = pygame.time.Clock()
     
-    
     running = True
     fps = 30
+    
     motionblur = False
     accumulate = False
-    m_blur_f = 0.4
-    rotating = False # TODO: Free the camera
+    m_blur_f = 0.5
+    
+    rotating = False
+    rot_speed = 1.5
     rotx = 0
     roty = -40.0
     mouse_sens = -120
-    rot_speed = 1.5
+    
     position = np.array(( 2.0, -15, 15, 0.0))
     move = np.array(( 0.0, 0.0, 0.0, 0.0))
     move_speed = 0.5
+    
     slow = False
     
     focused = None
-    mouse_hit = None
     mouse_down = False
     key_hit = None
     
     while running:
+        cx = np.cos( rotx / 180.0 * np.pi )
+        sx = np.sin( rotx / 180.0 * np.pi)
+        cy = np.cos( roty / 180.0 * np.pi)
+        sy = np.sin( roty / 180.0 * np.pi)
+
+        xrot = np.array(( (cx,  0.0, -sx,  0.0), 
+                          (0.0, 1.0,  0.0, 0.0),
+                          (sx,  0.0,  cx,  0.0),
+                          (0.0, 0.0,  0.0, 1.0)  ))
+        
+        yrot = np.array(( (1.0,  0.0, 0.0, 0.0), 
+                          (0.0,  cy,  sy,  0.0),
+                          (0.0, -sy,  cy,  0.0),
+                          (0.0,  0.0, 0.0, 1.0)  ))
+        
+        rot = np.dot( xrot, yrot )
+        
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
@@ -208,6 +146,8 @@ def main():
                     mouse_sens = -60
                     slow = True
                     move_speed = 0.1
+                    
+                # FIXME: after moving down (ctrl) and another direction same time it stucks moving
                 if event.mod % 256 == 64 or event.key == 306:
                     move[1] =  1.0
                 elif event.key == 32:
@@ -221,10 +161,8 @@ def main():
                 elif event.key == pygame.K_w or event.key == pygame.K_UP:
                     move[2] = -1.0
                 else:
-                    try:
-                        key_hit = int (event.unicode)
-                    except ValueError:
-                        pass
+                    key_hit = event.unicode
+                    
             elif event.type == pygame.KEYUP:
                 if event.mod % 256 == 64 or event.key == 306 or event.key == 32:
                     move[1] = 0.0
@@ -241,96 +179,103 @@ def main():
                     
             elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 mouse_down = True
+                GL.glSelectBuffer( 64 )
+                
+                GL.glRenderMode( GL.GL_SELECT )
+                lego.draw_mode_3d(event.pos)
+                GL.glInitNames()
+                GL.glMultMatrixf( rot )
+                GL.glMultMatrixf( np.eye(4) + np.vstack(( np.zeros((3,4)), position )) )
+                for i,p in enumerate( pieces ):
+                    GL.glPushName( i )
+                    p.draw()
+                    GL.glPopName()
+                hits = GL.glRenderMode( GL.GL_RENDER )
+                
+                distance = None
+                chosen = None
+                for j in hits:
+                    if distance > j[1] or distance is None:
+                        distance = j[1]
+                        chosen = j[2][0]
+                
+                GL.glRenderMode( GL.GL_SELECT )
+                lego.draw_mode_2d(event.pos)
+                GL.glInitNames()
+                for i,b in enumerate( buttons ):
+                    GL.glPushName( i )
+                    b.draw()
+                    GL.glPopName()
+                hits = GL.glRenderMode( GL.GL_RENDER )
+                
+                focused = buttons[hits.pop()[2][0]] if hits else None
+                
             elif mouse_down and event.type == pygame.MOUSEMOTION:
-                rotx += float(event.rel[0])/window_width  * mouse_sens
-                roty += float(event.rel[1])/window_height * mouse_sens
+                rotx += float(event.rel[0]) / window_width  * mouse_sens
+                roty += float(event.rel[1]) / window_height * mouse_sens
             elif event.type == pygame.MOUSEBUTTONUP and event.button == 1:
                 mouse_down = False
-                mouse_hit = event.pos
+                
+        if not np.array_equal( move, np.array(( 0.0, 0.0, 0.0, 0.0 )) ):
+            move = move_speed * move / np.sqrt( (move ** 2).sum() )
+        position += np.dot( rot, move )
         
         if motionblur:
             if not accumulate:
                 pygame.display.flip()
                 GL.glClear(GL.GL_COLOR_BUFFER_BIT|GL.GL_DEPTH_BUFFER_BIT)
             else:
-                GL.glAccum(GL.GL_ACCUM,m_blur_f)
-                GL.glAccum(GL.GL_RETURN, 1.0)
-                GL.glAccum(GL.GL_MULT,1.0 - m_blur_f)
+                GL.glAccum( GL.GL_ACCUM,m_blur_f )
+                GL.glAccum( GL.GL_RETURN, 1.0 )
+                GL.glAccum( GL.GL_MULT, 1.0 - m_blur_f )
             accumulate = not accumulate
-            ticker.tick(2*fps)
+            ticker.tick( 2*fps )
             if rotating:
                 rotx = (rotx + rot_speed/2) % 360
         else:
             pygame.display.flip()
-            GL.glClear(GL.GL_COLOR_BUFFER_BIT|GL.GL_DEPTH_BUFFER_BIT)
-            ticker.tick(fps)
+            GL.glClear( GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT )
+            ticker.tick( fps )
             if rotating:
                 rotx = (rotx + rot_speed) % 360
         
         # draw 3D stuff
+        lego.draw_mode_3d()
         
-        GL.glCallList(lego.L_DRAW_3D)
+        GL.glMultMatrixf( rot )
+        GL.glMultMatrixf( np.eye(4) + np.vstack(( np.zeros((3,4)), position )) )
         
-        xrot = np.array(( (np.cos(rotx/180*np.pi), 0.0, -np.sin(rotx/180*np.pi), 0.0), 
-                          (0.0,                    1.0,  0.0,                    0.0),
-                          (np.sin(rotx/180*np.pi), 0.0,  np.cos(rotx/180*np.pi), 0.0),
-                          (0.0,                    0.0,  0.0,                    1.0) ))
-        yrot = np.array(( (1.0,  0.0,                    0.0,                    0.0), 
-                          (0.0,  np.cos(roty/180*np.pi), np.sin(roty/180*np.pi), 0.0),
-                          (0.0, -np.sin(roty/180*np.pi), np.cos(roty/180*np.pi), 0.0),
-                          (0.0,  0.0,                    0.0,                    1.0) ))
-        if not np.array_equal(move, np.array((0.0,0.0,0.0,0.0))):
-            move = move_speed * move / np.sqrt( move ** 2 ).sum()
-        position += np.dot(xrot,np.dot(yrot,move))
-        pos = np.vstack((np.zeros((3,4)),position))
-        
-        GL.glMultMatrixf(yrot)
-        GL.glMultMatrixf(xrot)
-        GL.glMultMatrixf(np.eye(4) + pos)
-        
-        GL.glLightfv( GL.GL_LIGHT0, GL.GL_POSITION, -1 * lightp)
+        GL.glLightfv( GL.GL_LIGHT0, GL.GL_POSITION, -1 * lightp )
         
         lego.draw_grid()
         
-        ps = GL.glGetInteger(GL.GL_POINT_SIZE)
-        GL.glPointSize(10)
-        GL.glColor3f(1.0, 1.0, 0.5)
-        GL.glBegin(GL.GL_POINTS)
+        ps = GL.glGetInteger( GL.GL_POINT_SIZE )
+        GL.glPointSize( 10 )
+        GL.glColor3f( 1.0, 1.0, 0.5 )
+        GL.glBegin( GL.GL_POINTS )
         GL.glVertex3fv( lightp[:3] - np.array((0.1, 0.1, 0.1)) )
         GL.glEnd()
-        GL.glPointSize(ps)
+        GL.glPointSize( ps )
             
-
-        test_1.draw()
-        test_2.draw()
-        test_3.draw()
-        test_4.draw()
-        test_5.draw()
+        for piece in pieces:
+            piece.draw()
         
         # draw 2D stuff
+        lego.draw_mode_2d()
         
-        GL.glPushMatrix()
-        GL.glCallList(lego.L_DRAW_2D)
-        
-        layers.draw(1)
+        layers.draw( 1 )
         
         for b in  buttons:
-            b.draw( b is focused )
-            if mouse_hit and b.is_hit_by(mouse_hit):
-                focused = b
-                mouse_hit = None
-            if key_hit is not None and b is focused:
+            decide = b is focused
+            b.draw( decide )
+            if decide and not b.keepfocus:
+                focused = None
+            if key_hit is not None and b is focused and b.hasattr('value'):
                 b.value = key_hit
                 
-        if mouse_hit is not None:
-            mouse_hit = None
-            focused = None
-        
         key_hit = None
         
         layers.draw()
-        
-        GL.glPopMatrix()
         
     lego.finish()    
     pygame.quit()
