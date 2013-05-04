@@ -7,7 +7,8 @@ import OpenGL.GL as GL
 
 import pygame
 
-# TODO: create textbox, toggle button (radio button)
+from reference import reference
+
 class button( object ):
     def __init__( self, x, y, width, height, color, focus_color, keepfocus = False ):
         self.x = x
@@ -30,7 +31,7 @@ class button( object ):
 
 class arrow( button ):
     def __init__(self, x, y, width, height, color, focus_color, up = True ):
-        super(arrow, self).__init__( x, y, width, height, color, focus_color )
+        super( arrow, self ).__init__( x, y, width, height, color, focus_color )
         self.up = up
         
     def draw(self, focused=False):
@@ -108,7 +109,7 @@ class textbox( button ):
         self.lines = ll
     
     def draw( self, focused = False ):
-        super(textbox, self).draw(focused)
+        super( textbox, self ).draw(focused)
         #TODO: handle cursor
         if self.value:
             linesize = self.font.get_linesize()
@@ -116,11 +117,28 @@ class textbox( button ):
             y = self.y + linesize / 4 + self.text_offset[1]
             for i,tex in enumerate(self.__texs):
                 layer_manager.draw_ortho_layer( tex[0], x, y+i*(linesize+self.text_scale[1]), x+tex[1]+self.text_scale[0], y+i*linesize+tex[2]+self.text_scale[1]*self.lines )
+
+class toggle( button ):
+    def __init__(self, x, y, width, height, color, focus_color, ref, value ):
+        super( toggle, self ).__init__( x, y, width, height, color, focus_color, False )
+        self.ref = ref
+        if isinstance( value, reference ):
+            self.__value = value
+        else:
+            raise ValueError, "Toggle button should have a reference as value"
+    def draw( self, _focused=None ):
+        super( toggle, self ).draw( self.value == self.ref )
+    @property
+    def value( self ):
+        return self.__value.get()
+    @value.setter
+    def value( self, value ):
+        self.__value.set( value )
             
 class layer_manager( object ):
     
-    @staticmethod
-    def growPOT( surface ):
+    @classmethod
+    def growPOT( cls, surface ):
         powers_of_two = (1,2,4,8,16,32,64,256,512,1024,2048,4096) # further are out of HD
         if not isinstance(surface, pygame.Surface):
             raise ValueError, "growPOT can only be done on a Surface (from pygame)"
@@ -137,8 +155,8 @@ class layer_manager( object ):
             surface.blit(canvas,(0,0))
         return surface
     
-    @staticmethod
-    def draw_ortho_layer( texture, x, y, width, height, color = (1.0, 1.0, 1.0) ):
+    @classmethod
+    def draw_ortho_layer( cls, texture, x, y, width, height, color = (1.0, 1.0, 1.0) ):
         GL.glColor3fv(color)
         GL.glBindTexture(GL.GL_TEXTURE_2D, texture)
         
@@ -149,8 +167,8 @@ class layer_manager( object ):
         GL.glTexCoord2f(1.0, 1.0); GL.glVertex2i(width,y)    
         GL.glEnd()
         
-    @staticmethod    
-    def load_2d_texture(imageData, width, height, texture=None ):
+    @classmethod    
+    def load_2d_texture( cls, imageData, width, height, texture=None ):
         if texture is None:
             texture = GL.glGenTextures(1)
         GL.glBindTexture(GL.GL_TEXTURE_2D, texture)

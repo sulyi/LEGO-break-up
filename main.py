@@ -21,7 +21,7 @@ except ImportError:
     
 import lego
 import gui
-
+from reference import reference, opposite
 
 def main():
     window_width = 800
@@ -58,14 +58,17 @@ def main():
     sub_scale = -5
     text_color = ( 192, 64, 128 )
     
+    piecesize = reference()
+    grid = opposite()
+    
     buttons = list()
     buttons.append( gui.textbox(  11, 50,  42, 32, (0.8, 0.8, 0.0), (0.3, 0.8, 0.5), small, text_color, (0,4) ) )
     buttons.append( gui.textbox(  62, 50,  42, 32, (0.8, 0.8, 0.0), (0.3, 0.8, 0.5), small, text_color, (0,4) ) )
     buttons.append( gui.textbox( 113, 50,  42, 32, (0.8, 0.8, 0.0), (0.3, 0.8, 0.5), small, text_color, (0,4) ) )
-    buttons.append( gui.button (  33,150,  32, 32, (0.8, 0.8, 0.0), (0.3, 0.8, 0.5) ) )
-    buttons.append( gui.button ( 101,150,  32, 32, (0.8, 0.8, 0.0), (0.3, 0.8, 0.5) ) )
+    buttons.append( gui.toggle (  33,150,  32, 32, (0.8, 0.8, 0.0), (0.3, 0.8, 0.5), lego.LEGO_BIG,   piecesize ) )
+    buttons.append( gui.toggle ( 101,150,  32, 32, (0.8, 0.8, 0.0), (0.3, 0.8, 0.5), lego.LEGO_SMALL, piecesize ) )
     buttons.append( gui.textbox(  11,220, 145,100, (0.8, 0.8, 0.0), (0.3, 0.8, 0.5), small, text_color ) )
-    buttons.append( gui.button ( 123,334,  32, 32, (0.8, 0.8, 0.0), (0.3, 0.8, 0.5) ) )
+    buttons.append( gui.toggle ( 123,334,  32, 32, (0.8, 0.8, 0.0), (0.3, 0.8, 0.5), True, grid ) )
     buttons.append( gui.arrow  (  17,380,  32, 32, (0.8, 0.8, 0.0), (0.3, 0.8, 0.5) ) )
     buttons.append( gui.arrow  ( 117,380,  32, 32, (0.8, 0.8, 0.0), (0.3, 0.8, 0.5), False ) )
     buttons.append( gui.button (  11,430, 145, 50, (0.8, 0.8, 0.0), (0.3, 0.8, 0.5) ) )
@@ -269,10 +272,13 @@ def main():
         for b in  buttons:
             decide = b is focused
             b.draw( decide )
+            if hasattr(b, 'value') and b is focused:
+                if key_hit is not None and isinstance(b, gui.textbox):
+                    b.append(key_hit)
+                if isinstance(b, gui.toggle):
+                    b.value = b.ref
             if decide and not b.keepfocus:
                 focused = None
-            if key_hit is not None and b is focused and hasattr(b, 'value'):
-                b.append(key_hit)
                 
         key_hit = None
         
