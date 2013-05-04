@@ -223,7 +223,7 @@ def gl_init(width, height):
     GL.glClearAccum(0.0, 0.0, 0.0, 1.0)
     GL.glClear(GL.GL_ACCUM_BUFFER_BIT)
     
-    GL.glGenLists(1)
+    #GL.glGenLists(1)
     
     draw_mode_3d()
 

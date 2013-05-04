@@ -51,35 +51,36 @@ def main():
     # draw dialog screen 
     
     print "Loading layers ...",
-    #FIXME: smaller gui
-    buttons = list()
-    buttons.append( gui.button(  27, 57,  45, 50, (0.8, 0.8, 0.0), (0.3, 0.8, 0.5), True ))
-    buttons.append( gui.button(  85, 57,  45, 50, (0.8, 0.8, 0.0), (0.3, 0.8, 0.5), True ))
-    buttons.append( gui.button( 143, 57,  45, 50, (0.8, 0.8, 0.0), (0.3, 0.8, 0.5), True ))
-    buttons.append( gui.button(  27,190,  45, 50, (0.8, 0.8, 0.0), (0.3, 0.8, 0.5) ))
-    buttons.append( gui.button( 143,190,  45, 50, (0.8, 0.8, 0.0), (0.3, 0.8, 0.5) ))
-    buttons.append( gui.button(  27,295, 161,100, (0.8, 0.8, 0.0), (0.3, 0.8, 0.5), True ))
-    buttons.append( gui.button( 143,410,  45, 50, (0.8, 0.8, 0.0), (0.3, 0.8, 0.5) ))
-    buttons.append( gui.arrow(  27,490,   45, 50, (0.8, 0.8, 0.0), (0.3, 0.8, 0.5) ))
-    buttons.append( gui.arrow( 143,490,   45, 50, (0.8, 0.8, 0.0), (0.3, 0.8, 0.5), False ))
-    buttons.append( gui.button(  27,550, 161, 50, (0.8, 0.8, 0.0), (0.3, 0.8, 0.5) ))
-    
-    layers = gui.layer_manager()
-    layers.add( pygame.image.load(os.path.join('data','ui.png')), 0, 0, 0, 0 )
     
     title = pygame.font.SysFont("courier", 24, True, True)
+    small = pygame.font.SysFont("courier", 14, True, True)
     title_scale = 15
     sub_scale = -5
     text_color = ( 192, 64, 128 )
     
-    layers.add( title.render( po["position"], True, text_color ), 20, 10, 0, title_scale )
-    layers.add( title.render( po["height"], True, text_color ), 20, 117, 0, title_scale)
-    layers.add( title.render( po["big"], True, text_color ), 20, 155, 0, sub_scale )
-    layers.add( title.render( po["small"], True, text_color ), 130, 155, 0, sub_scale )
-    layers.add( title.render( po["sides"], True, text_color ), 20, 250, 0, title_scale)
-    layers.add( title.render( po["grid"], True, text_color ), 20, 415, 0, title_scale)
-    layers.add( title.render( "X", True, text_color ), 100, 490, 0, title_scale)
-    layers.add( title.render( "OK", True, text_color ), 90, 555, 0, title_scale)
+    buttons = list()
+    buttons.append( gui.textbox(  11, 50,  42, 32, (0.8, 0.8, 0.0), (0.3, 0.8, 0.5), small, text_color, (0,4) ) )
+    buttons.append( gui.textbox(  62, 50,  42, 32, (0.8, 0.8, 0.0), (0.3, 0.8, 0.5), small, text_color, (0,4) ) )
+    buttons.append( gui.textbox( 113, 50,  42, 32, (0.8, 0.8, 0.0), (0.3, 0.8, 0.5), small, text_color, (0,4) ) )
+    buttons.append( gui.button (  33,150,  32, 32, (0.8, 0.8, 0.0), (0.3, 0.8, 0.5) ) )
+    buttons.append( gui.button ( 101,150,  32, 32, (0.8, 0.8, 0.0), (0.3, 0.8, 0.5) ) )
+    buttons.append( gui.textbox(  11,220, 145,100, (0.8, 0.8, 0.0), (0.3, 0.8, 0.5), small, text_color ) )
+    buttons.append( gui.button ( 123,334,  32, 32, (0.8, 0.8, 0.0), (0.3, 0.8, 0.5) ) )
+    buttons.append( gui.arrow  (  17,380,  32, 32, (0.8, 0.8, 0.0), (0.3, 0.8, 0.5) ) )
+    buttons.append( gui.arrow  ( 117,380,  32, 32, (0.8, 0.8, 0.0), (0.3, 0.8, 0.5), False ) )
+    buttons.append( gui.button (  11,430, 145, 50, (0.8, 0.8, 0.0), (0.3, 0.8, 0.5) ) )
+    
+    layers = gui.layer_manager()
+    layers.add( pygame.image.load(os.path.join('data','ui.png')), 0, 0, (0,0) )
+    
+    layers.add( title.render(po["position"],True,text_color),  20,  10, (0,title_scale) )
+    layers.add( title.render(po["height"],  True,text_color),  20,  82, (0,title_scale) )
+    layers.add( title.render(po["big"],     True,text_color),  20, 122, (0,sub_scale)   )
+    layers.add( title.render(po["small"],   True,text_color),  85, 122, (0,sub_scale)   )
+    layers.add( title.render(po["sides"],   True,text_color),  20, 182, (0,title_scale) )
+    layers.add( title.render(po["grid"],    True,text_color),  20, 330, (0,title_scale) )
+    layers.add( title.render("X",           True,text_color),  75, 377, (0,title_scale) )
+    layers.add( title.render("OK",          True,text_color),  67, 435, (0,title_scale) )
     layers.load()
     print "Done"
     
@@ -161,7 +162,7 @@ def main():
                 elif event.key == pygame.K_w or event.key == pygame.K_UP:
                     move[2] = -1.0
                 else:
-                    key_hit = event.unicode
+                    key_hit = event
                     
             elif event.type == pygame.KEYUP:
                 if event.mod % 256 == 64 or event.key == 306 or event.key == 32:
@@ -193,11 +194,11 @@ def main():
                 hits = GL.glRenderMode( GL.GL_RENDER )
                 
                 distance = None
-                chosen = None
+                chosen_index = None
                 for j in hits:
                     if distance > j[1] or distance is None:
                         distance = j[1]
-                        chosen = j[2][0]
+                        chosen_index = j[2][0]
                 
                 GL.glRenderMode( GL.GL_SELECT )
                 lego.draw_mode_2d(event.pos)
@@ -270,8 +271,8 @@ def main():
             b.draw( decide )
             if decide and not b.keepfocus:
                 focused = None
-            if key_hit is not None and b is focused and b.hasattr('value'):
-                b.value = key_hit
+            if key_hit is not None and b is focused and hasattr(b, 'value'):
+                b.append(key_hit)
                 
         key_hit = None
         
