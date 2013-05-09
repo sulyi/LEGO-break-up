@@ -1,10 +1,10 @@
 '''
-Created on 2013.05.04.
+Modified on 2013.05.04.
 
-@author: arsene
+@author: Ian Bicking 
+@source: https://bitbucket.org/ianb/formencode , declarative.py
+@modifier: arsene
 '''
-from lxml.html.builder import SUP
-
 class classinstancemethod(object):
     """
     Acts like a class method when called from a class, like an

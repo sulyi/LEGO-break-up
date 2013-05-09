@@ -52,39 +52,44 @@ def main():
     
     print "Loading layers ...",
     
+    button_color = (0.8, 0.8, 0.0)
+    button_focus_color = (0.3, 0.8, 0.5)
+    button_error_color = (0.8, 0.4, 0.4)
+    
     title = pygame.font.SysFont("courier", 24, True, True)
     small = pygame.font.SysFont("courier", 14, True, True)
     title_scale = 15
     sub_scale = -5
     text_color = ( 192, 64, 128 )
+    text_error_color = (204, 204, 0)
     
     piecesize = reference()
-    grid = opposite()
+    grid = opposite(True)
     
-    buttons = list()
-    buttons.append( gui.textbox(  11, 50,  42, 32, (0.8, 0.8, 0.0), (0.3, 0.8, 0.5), small, text_color, (0,4) ) )
-    buttons.append( gui.textbox(  62, 50,  42, 32, (0.8, 0.8, 0.0), (0.3, 0.8, 0.5), small, text_color, (0,4) ) )
-    buttons.append( gui.textbox( 113, 50,  42, 32, (0.8, 0.8, 0.0), (0.3, 0.8, 0.5), small, text_color, (0,4) ) )
-    buttons.append( gui.toggle (  33,150,  32, 32, (0.8, 0.8, 0.0), (0.3, 0.8, 0.5), lego.LEGO_BIG,   piecesize ) )
-    buttons.append( gui.toggle ( 101,150,  32, 32, (0.8, 0.8, 0.0), (0.3, 0.8, 0.5), lego.LEGO_SMALL, piecesize ) )
-    buttons.append( gui.textbox(  11,220, 145,100, (0.8, 0.8, 0.0), (0.3, 0.8, 0.5), small, text_color ) )
-    buttons.append( gui.toggle ( 123,334,  32, 32, (0.8, 0.8, 0.0), (0.3, 0.8, 0.5), True, grid ) )
-    buttons.append( gui.arrow  (  17,380,  32, 32, (0.8, 0.8, 0.0), (0.3, 0.8, 0.5) ) )
-    buttons.append( gui.arrow  ( 117,380,  32, 32, (0.8, 0.8, 0.0), (0.3, 0.8, 0.5), False ) )
-    buttons.append( gui.button (  11,430, 145, 50, (0.8, 0.8, 0.0), (0.3, 0.8, 0.5) ) )
+    controls = dict()
+    controls["x"]     = gui.textbox(  11, 50,  42, 32, button_color, button_focus_color, button_error_color, small, text_color, text_error_color, (0,4) ) 
+    controls["y"]     = gui.textbox(  62, 50,  42, 32, button_color, button_focus_color, button_error_color, small, text_color, text_error_color, (0,4) ) 
+    controls["z"]     = gui.textbox( 113, 50,  42, 32, button_color, button_focus_color, button_error_color, small, text_color, text_error_color, (0,4) ) 
+    controls["big"]   = gui.toggle (  33,150,  32, 32, button_color, button_focus_color, button_error_color, lego.LEGO_BIG,   piecesize ) 
+    controls["small"] = gui.toggle ( 101,150,  32, 32, button_color, button_focus_color, button_error_color, lego.LEGO_SMALL, piecesize ) 
+    controls["sides"] = gui.textbox(  11,220, 145,100, button_color, button_focus_color, button_error_color, small, text_color, text_error_color ) 
+    controls["grid"]  = gui.toggle ( 123,334,  32, 32, button_color, button_focus_color, button_error_color, True, grid ) 
+    controls["raise"] = gui.arrow  (  17,380,  32, 32, button_color, button_focus_color, button_error_color ) 
+    controls["lower"] = gui.arrow  ( 117,380,  32, 32, button_color, button_focus_color, button_error_color, False ) 
+    controls["send"]  = gui.button (  11,430, 145, 50, button_color, button_focus_color, button_error_color ) 
     
-    layers = gui.layer_manager()
-    layers.add( pygame.image.load(os.path.join('data','ui.png')), 0, 0, (0,0) )
+    static_layers = gui.layer_manager()
+    static_layers.add( pygame.image.load(os.path.join('data','ui.png')), 0, 0, (0,0) )
     
-    layers.add( title.render(po["position"],True,text_color),  20,  10, (0,title_scale) )
-    layers.add( title.render(po["height"],  True,text_color),  20,  82, (0,title_scale) )
-    layers.add( title.render(po["big"],     True,text_color),  20, 122, (0,sub_scale)   )
-    layers.add( title.render(po["small"],   True,text_color),  85, 122, (0,sub_scale)   )
-    layers.add( title.render(po["sides"],   True,text_color),  20, 182, (0,title_scale) )
-    layers.add( title.render(po["grid"],    True,text_color),  20, 330, (0,title_scale) )
-    layers.add( title.render("X",           True,text_color),  75, 377, (0,title_scale) )
-    layers.add( title.render("OK",          True,text_color),  67, 435, (0,title_scale) )
-    layers.load()
+    static_layers.add( title.render(po["position"],True,text_color),  20,  10, (0,title_scale) )
+    static_layers.add( title.render(po["height"],  True,text_color),  20,  82, (0,title_scale) )
+    static_layers.add( title.render(po["big"],     True,text_color),  20, 122, (0,sub_scale)   )
+    static_layers.add( title.render(po["small"],   True,text_color),  85, 122, (0,sub_scale)   )
+    static_layers.add( title.render(po["sides"],   True,text_color),  20, 182, (0,title_scale) )
+    static_layers.add( title.render(po["grid"],    True,text_color),  20, 330, (0,title_scale) )
+    static_layers.add( title.render("OK",          True,text_color),  67, 435, (0,title_scale) )
+    static_layers.load()
+    
     print "Done"
     
     print "\nEntering drawing loop\n"
@@ -107,6 +112,7 @@ def main():
     m_blur_f = 0.5
     
     rotating = False
+    rotrot = 0.0
     rot_speed = 1.5
     rotx = 0
     roty = -40.0
@@ -121,6 +127,14 @@ def main():
     focused = None
     mouse_down = False
     key_hit = None
+    
+    errors = set()
+    chosen = None
+    
+    grid_level = 0
+    
+    dyn_layers = gui.dynamic_layer_manager()
+    dyn_layers.add( "grid-level", title.render(str(grid_level),True,text_color), 75, 377, (0,title_scale) )
     
     while running:
         cx = np.cos( rotx / 180.0 * np.pi )
@@ -139,6 +153,8 @@ def main():
                           (0.0,  0.0, 0.0, 1.0)  ))
         
         rot = np.dot( xrot, yrot )
+        
+        # handle events
         
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -195,24 +211,34 @@ def main():
                     p.draw()
                     GL.glPopName()
                 hits = GL.glRenderMode( GL.GL_RENDER )
-                
                 distance = None
-                chosen_index = None
-                for j in hits:
-                    if distance > j[1] or distance is None:
-                        distance = j[1]
-                        chosen_index = j[2][0]
+                if hits:
+                    for j in hits:
+                        if distance > j[1] or distance is None:
+                            distance = j[1]
+                            chosen = pieces[ j[2][0] ]
+                    controls["x"].value = str( chosen.position[0] )
+                    controls["y"].value = str( chosen.position[1] )
+                    controls["z"].value = str( chosen.position[2] )
+                    piecesize.set( chosen.size )
+                    controls["sides"].value = ''
+                    controls["sides"].value = ','.join(str(i) for i in chosen.sides)
+                else:
+                    chosen = None
                 
                 GL.glRenderMode( GL.GL_SELECT )
                 lego.draw_mode_2d(event.pos)
                 GL.glInitNames()
-                for i,b in enumerate( buttons ):
+                i = 0
+                l = list()
+                for k,b in controls.items():
                     GL.glPushName( i )
                     b.draw()
                     GL.glPopName()
+                    l.append(k)
+                    i += 1
                 hits = GL.glRenderMode( GL.GL_RENDER )
-                
-                focused = buttons[hits.pop()[2][0]] if hits else None
+                focused = controls[l[hits.pop()[2][0]]] if hits else None
                 
             elif mouse_down and event.type == pygame.MOUSEMOTION:
                 rotx += float(event.rel[0]) / window_width  * mouse_sens
@@ -224,38 +250,43 @@ def main():
             move = move_speed * move / np.sqrt( (move ** 2).sum() )
         position += np.dot( rot, move )
         
-        if motionblur:
-            if not accumulate:
-                pygame.display.flip()
-                GL.glClear(GL.GL_COLOR_BUFFER_BIT|GL.GL_DEPTH_BUFFER_BIT)
-            else:
-                GL.glAccum( GL.GL_ACCUM,m_blur_f )
-                GL.glAccum( GL.GL_RETURN, 1.0 )
-                GL.glAccum( GL.GL_MULT, 1.0 - m_blur_f )
-            accumulate = not accumulate
-            ticker.tick( 2*fps )
-            if rotating:
-                rotx = (rotx + rot_speed/2) % 360
-        else:
-            pygame.display.flip()
-            GL.glClear( GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT )
-            ticker.tick( fps )
-            if rotating:
-                rotx = (rotx + rot_speed) % 360
-        
         # draw 3D stuff
         lego.draw_mode_3d()
         
         GL.glMultMatrixf( rot )
         GL.glMultMatrixf( np.eye(4) + np.vstack(( np.zeros((3,4)), position )) )
         
-        GL.glLightfv( GL.GL_LIGHT0, GL.GL_POSITION, -1 * lightp )
+        if motionblur:
+            if not accumulate:
+                pygame.display.flip()
+                GL.glClear( GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT )
+            else:
+                GL.glAccum( GL.GL_ACCUM,m_blur_f )
+                GL.glAccum( GL.GL_RETURN, 1.0 )
+                GL.glAccum( GL.GL_MULT, 1.0 - m_blur_f ) 
+            accumulate = not accumulate
+            ticker.tick( 2*fps )
+            if rotating:
+                rotrot = (rotrot + rot_speed/2) % 360
+                GL.glRotatef( rotrot, 0.0, 1.0, 0.0 )
+        else:
+            pygame.display.flip()
+            GL.glClear( GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT )
+            ticker.tick( fps )
+            if rotating:
+                rotrot = (rotrot + rot_speed) % 360
+                GL.glRotatef( rotrot, 0.0, 1.0, 0.0 )
         
-        lego.draw_grid()
+        GL.glLightfv( GL.GL_LIGHT0, GL.GL_POSITION, lightp )
+        
+        if controls["grid"].value:
+            lego.draw_grid(grid_level)
         
         ps = GL.glGetInteger( GL.GL_POINT_SIZE )
         GL.glPointSize( 10 )
         GL.glColor3f( 1.0, 1.0, 0.5 )
+        GL.glBindTexture(GL.GL_TEXTURE_2D, 0)
+        GL.glNormal3fv(lightp[:3])
         GL.glBegin( GL.GL_POINTS )
         GL.glVertex3fv( lightp[:3] - np.array((0.1, 0.1, 0.1)) )
         GL.glEnd()
@@ -267,22 +298,70 @@ def main():
         # draw 2D stuff
         lego.draw_mode_2d()
         
-        layers.draw( 1 )
+        static_layers.draw( 1 )
         
-        for b in  buttons:
+        for b in controls.values():
+            
             decide = b is focused
-            b.draw( decide )
-            if hasattr(b, 'value') and b is focused:
+            b.draw( decide, b in errors )
+            if b is focused:
                 if key_hit is not None and isinstance(b, gui.textbox):
                     b.append(key_hit)
                 if isinstance(b, gui.toggle):
                     b.value = b.ref
+                if b is controls["raise"]:
+                    grid_level += 1
+                    dyn_layers.add( "grid-level", title.render(str(grid_level),True,text_color), 75, 377, (0,title_scale) )
+                if b is controls["lower"]:
+                    grid_level -= 1
+                    dyn_layers.add( "grid-level", title.render(str(grid_level),True,text_color), 75, 377, (0,title_scale) )
+                if b is controls["send"]:
+                    all_ok = True
+                    errors = set()
+                    try:
+                        sides = tuple( int(i) for i in controls["sides"].value.split(',') )
+                        lego.piece.is_closed(sides)
+                    except lego.LoopError:
+                        #TODO: write message on screen (error code)
+                        errors.add(controls["sides"])
+                        all_ok = False
+                    except ValueError:
+                        errors.add(controls["sides"])
+                        all_ok = False
+                    try:
+                        x = int( float( controls["x"].value ) )
+                    except ValueError:
+                        errors.add(controls["x"])
+                        all_ok = False
+                    try:
+                        y = int( float( controls["y"].value )*3 ) / 3.0
+                    except ValueError:
+                        errors.add(controls["y"])
+                        all_ok = False
+                    try:
+                        z = int( float( controls["z"].value ) )
+                    except ValueError:
+                        errors.add(controls["z"])
+                        all_ok = False
+                    if piecesize.get() is None:
+                        errors.add(controls["big"])
+                        errors.add(controls["small"])
+                        all_ok = False    
+                        
+                    if all_ok:
+                        pieces.append( lego.piece(sides, piecesize.value, (0.2, 0.1, 0.8), (x,y,z)) )
+                        controls["sides"].value = ''
+                        controls["x"].value = '' 
+                        controls["y"].value = ''
+                        controls["z"].value = ''
+                        piecesize.value = None
             if decide and not b.keepfocus:
                 focused = None
                 
         key_hit = None
         
-        layers.draw()
+        static_layers.draw()
+        dyn_layers.draw()
         
     lego.finish()    
     pygame.quit()

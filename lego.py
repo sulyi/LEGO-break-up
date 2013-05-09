@@ -42,10 +42,10 @@ SCREEN_HEIGHT = None
 L_DRAW_2D = None
 L_DRAW_3D = None
 
-class LoopError(ValueError):
+class LoopError( ValueError ):
     pass
 
-class piece(object):
+class piece( object ):
     def __init__( self, sides, size, color,  position = (0.0, 0.0, 0.0) ):
         self.sides = sides
         self.color = color
@@ -83,18 +83,18 @@ class piece(object):
         
         for i in range(0,len(self.__xcoords)):
             GL.glBegin(GL.GL_QUADS)
-            GL.glNormal3f( np.sign(self.sides[2*i-1]), 0.0, 0.0 )
+            sign = float(np.sign(self.sides[2*i-1]))
+            GL.glNormal3f( sign, 0.0, 0.0 )
             GL.glVertex3f( self.__xcoords[i] * LEGO_GRID, height, self.__ycoords[i-1] * LEGO_GRID)
             GL.glVertex3f( self.__xcoords[i] * LEGO_GRID, height, self.__ycoords[i]   * LEGO_GRID)
-            GL.glVertex3f( self.__xcoords[i] * LEGO_GRID, 0.0,     self.__ycoords[i]   * LEGO_GRID)
-            GL.glVertex3f( self.__xcoords[i] * LEGO_GRID, 0.0,     self.__ycoords[i-1] * LEGO_GRID)
-            GL.glEnd()
-            GL.glNormal3f( 0.0, 0.0, -1.0 * np.sign(self.sides[2*i-2]) )
-            GL.glBegin(GL.GL_QUADS)
+            GL.glVertex3f( self.__xcoords[i] * LEGO_GRID, 0.0,    self.__ycoords[i]   * LEGO_GRID)
+            GL.glVertex3f( self.__xcoords[i] * LEGO_GRID, 0.0,    self.__ycoords[i-1] * LEGO_GRID)
+            sign = float(np.sign(self.sides[2*i-2]))
+            GL.glNormal3f( 0.0, 0.0, -sign )
             GL.glVertex3f( self.__xcoords[i-1] * LEGO_GRID, height, self.__ycoords[i-1] * LEGO_GRID )
             GL.glVertex3f( self.__xcoords[i]   * LEGO_GRID, height, self.__ycoords[i-1] * LEGO_GRID )
-            GL.glVertex3f( self.__xcoords[i]   * LEGO_GRID, 0.0,     self.__ycoords[i-1] * LEGO_GRID )
-            GL.glVertex3f( self.__xcoords[i-1] * LEGO_GRID, 0.0,     self.__ycoords[i-1] * LEGO_GRID )
+            GL.glVertex3f( self.__xcoords[i]   * LEGO_GRID, 0.0,    self.__ycoords[i-1] * LEGO_GRID )
+            GL.glVertex3f( self.__xcoords[i-1] * LEGO_GRID, 0.0,    self.__ycoords[i-1] * LEGO_GRID )
             GL.glEnd()
             
         GL.glTranslatef( self.left*LEGO_GRID + LEGO_GRID/2.0, (LEGO_BUMP_HEIGHT+height)/2.0 , self.bottom*LEGO_GRID - LEGO_GRID/2.0 )
@@ -108,31 +108,32 @@ class piece(object):
         GL.glEndList()
 
 
-    def __del__(self):
-        if hasattr(self,'__tess'):
+    def __del__( self ):
+        if hasattr( self,'__tess' ):
         # checking this might be speared, but shit happens ?
-            GLU.gluDeleteTess(self.__tess)
+            GLU.gluDeleteTess( self.__tess )
     
     @property
-    def position(self):
+    def position( self ):
         return self.__position
     
     @position.setter
-    def position(self, position):
+    def position( self, position ):
         self.__position = position
         self.__real_position = (position[0] * LEGO_GRID, position[2] * LEGO_BIG_HEIGHT, position[1] * LEGO_GRID )
                 
     @property
-    def sides(self):
+    def sides( self ):
         return self.__sides
     
     @sides.setter
-    def sides(self,sides):
-        self.__is_closed(sides)
+    def sides( self, sides ):
+        self.__is_closed( sides )
         self.__sides = sides
-    
-    def __is_closed(self,sides):
-        length = len(sides)
+        
+    @classmethod
+    def is_closed( cls, sides ):
+        length = len( sides )
         if length < 4:
             raise LoopError, "Too few sides given to describe a rectangular shape"
         if length % 2 == 1:
@@ -142,7 +143,7 @@ class piece(object):
         ymax=0
         ymin=0
         horizontal = [0]
-        for i,s in enumerate(sides[::2]):
+        for i,s in enumerate( sides[::2] ):
             x = horizontal[i] + s
             horizontal.append(x)
             if x > xmax:
@@ -150,9 +151,9 @@ class piece(object):
             if x < xmin:
                 xmin = x
         vertical = [0]
-        for j,s in enumerate(sides[1::2]):
+        for j,s in enumerate( sides[1::2] ):
             y = vertical[j] + s
-            vertical.append(y)
+            vertical.append( y )
             if y > ymax:
                 ymax = y
             if y < ymin:
@@ -165,15 +166,18 @@ class piece(object):
             raise LoopError, "Even indexed sides are not closed."
         if horizontal[i]:
             raise LoopError, "Odd indexed sides are not closed"
+        return  horizontal[:-1], vertical[:-1], xmax, xmin, ymax, ymin
         
-        self.__xcoords = horizontal[:-1]
-        self.__ycoords = vertical[:-1]
-        self.right = xmax
-        self.left = xmin
-        self.top = ymax
-        self.bottom = ymin
+    def __is_closed(self, sides):
+        r = self.__class__.is_closed(sides)
+        self.__xcoords = r[0]
+        self.__ycoords = r[1]
+        self.right = r[2]
+        self.left = r[3]
+        self.top = r[4]
+        self.bottom = r[5]
     
-    def is_hit(self, point):
+    def is_hit( self, point ):
         x = point[0]
         y = point[1]
         odd = False
@@ -182,15 +186,15 @@ class piece(object):
                 odd = not odd        
         return odd
     
-    def draw(self):
+    def draw( self ):
         GL.glPushMatrix()
         
-        GL.glTranslatef(*self.__real_position)
-        GL.glCallList(self.__gllist)
+        GL.glTranslatef( *self.__real_position )
+        GL.glCallList( self.__gllist )
         
         GL.glPopMatrix()
 
-def gl_init(width, height):
+def gl_init( width, height ):
     global __legocaptex,__quadratic, \
            L_DRAW_2D,L_DRAW_3D,  \
            SCREEN_WIDTH, SCREEN_HEIGHT
@@ -214,6 +218,8 @@ def gl_init(width, height):
     GL.glClearColor(0.0, 0.2, 0.5, 1.0)
     GL.glViewport(0,0,800,600)
     
+    GL.glEnable(GL.GL_POINT_SMOOTH)
+    GL.glEnable(GL.GL_LINE_SMOOTH)
     GL.glEnable(GL.GL_TEXTURE_2D)
     GL.glEnable(GL.GL_ALPHA_TEST)
     GL.glEnable(GL.GL_COLOR_MATERIAL)
@@ -267,7 +273,7 @@ def finish():
     except NameError as e:
         print e.message
 
-def draw_grid():
+def draw_grid( level ):
     GL.glDisable(GL.GL_LIGHTING)
     ls = GL.glGetFloat(GL.GL_LINE_WIDTH)
     GL.glLineWidth(3.0)
@@ -279,16 +285,16 @@ def draw_grid():
     half_interval = 10
     
     for i in range(-half_interval, half_interval+1):
-        GL.glVertex3f( i * LEGO_GRID, 0.0,  half_interval * LEGO_GRID )
-        GL.glVertex3f( i * LEGO_GRID, 0.0, -half_interval * LEGO_GRID )
-        GL.glVertex3f(  half_interval * LEGO_GRID, 0.0, i * LEGO_GRID )
-        GL.glVertex3f( -half_interval * LEGO_GRID, 0.0, i * LEGO_GRID )
+        GL.glVertex3f( i * LEGO_GRID, level * LEGO_BIG_HEIGHT,  half_interval * LEGO_GRID )
+        GL.glVertex3f( i * LEGO_GRID, level * LEGO_BIG_HEIGHT, -half_interval * LEGO_GRID )
+        GL.glVertex3f(  half_interval * LEGO_GRID, level * LEGO_BIG_HEIGHT, i * LEGO_GRID )
+        GL.glVertex3f( -half_interval * LEGO_GRID, level * LEGO_BIG_HEIGHT, i * LEGO_GRID )
         
     GL.glEnd()
     GL.glLineWidth(ls)
     GL.glEnable(GL.GL_LIGHTING)
     
-def _caped_cylinder(radius,height,segments):
+def _caped_cylinder( radius, height, segments ):
     global __quadratic, __legocaptex
     GL.glPushMatrix()
     
@@ -308,56 +314,56 @@ def _caped_cylinder(radius,height,segments):
     
     GL.glPopMatrix()
 
-def _five_face_box(width,height,depth, color):
-    half_width=width/2.0
-    half_height=height/2.0
-    half_depth=depth/2.0
+def _five_face_box( width, height, depth, color ):
+    half_width = width/2.0
+    half_height = height/2.0
+    half_depth = depth/2.0
     
-    GL.glBindTexture(GL.GL_TEXTURE_2D,0)
+    GL.glBindTexture( GL.GL_TEXTURE_2D, 0 )
     
-    GL.glColor3fv(color)
-    GL.glNormal3f(0.0, 0.0, 1.0)
-    GL.glBegin(GL.GL_QUADS)
+    GL.glColor3fv( color )
+    GL.glNormal3f( 0.0, 0.0, 1.0 )
+    GL.glBegin( GL.GL_QUADS )
 
     # Front Face
-    GL.glTexCoord2f(0.0, 1.0); GL.glVertex3f(-half_width, -half_height,  half_depth)
-    GL.glTexCoord2f(1.0, 1.0); GL.glVertex3f( half_width, -half_height,  half_depth)
-    GL.glTexCoord2f(1.0, 0.0); GL.glVertex3f( half_width,  half_height,  half_depth)
-    GL.glTexCoord2f(0.0, 0.0); GL.glVertex3f(-half_width,  half_height,  half_depth)
+    GL.glTexCoord2f(0.0, 1.0); GL.glVertex3f( -half_width, -half_height,  half_depth )
+    GL.glTexCoord2f(1.0, 1.0); GL.glVertex3f(  half_width, -half_height,  half_depth )
+    GL.glTexCoord2f(1.0, 0.0); GL.glVertex3f(  half_width,  half_height,  half_depth )
+    GL.glTexCoord2f(0.0, 0.0); GL.glVertex3f( -half_width,  half_height,  half_depth )
     
     GL.glEnd()
     
 # TODO: add texcoordinates to other faces (for bump map)
-    GL.glNormal3f(0.0, 0.0, -1.0)
-    GL.glBegin(GL.GL_QUADS)
+    GL.glNormal3f( 0.0, 0.0, -1.0 )
+    GL.glBegin( GL.GL_QUADS )
     
     # Back Face
-    GL.glVertex3f( half_width, -half_height, -half_depth)
-    GL.glVertex3f(-half_width, -half_height, -half_depth)
-    GL.glVertex3f(-half_width,  half_height, -half_depth)
-    GL.glVertex3f( half_width,  half_height, -half_depth)
+    GL.glVertex3f(  half_width, -half_height, -half_depth )
+    GL.glVertex3f( -half_width, -half_height, -half_depth )
+    GL.glVertex3f( -half_width,  half_height, -half_depth )
+    GL.glVertex3f(  half_width,  half_height, -half_depth )
     
     GL.glEnd()
     
-    GL.glNormal3f(1.0, 0.0, 0.0)
-    GL.glBegin(GL.GL_QUADS)
+    GL.glNormal3f( 1.0, 0.0, 0.0 )
+    GL.glBegin( GL.GL_QUADS )
 
     # Right face
-    GL.glVertex3f( half_width, -half_height,  half_depth)
-    GL.glVertex3f( half_width, -half_height, -half_depth)
-    GL.glVertex3f( half_width,  half_height, -half_depth)
-    GL.glVertex3f( half_width,  half_height,  half_depth)
+    GL.glVertex3f( half_width, -half_height,  half_depth )
+    GL.glVertex3f( half_width, -half_height, -half_depth )
+    GL.glVertex3f( half_width,  half_height, -half_depth )
+    GL.glVertex3f( half_width,  half_height,  half_depth )
     
     GL.glEnd()
     
-    GL.glNormal3f(-1.0, 0.0, 0.0)
-    GL.glBegin(GL.GL_QUADS)
+    GL.glNormal3f( -1.0, 0.0, 0.0 )
+    GL.glBegin( GL.GL_QUADS )
 
     # Left Face
-    GL.glVertex3f(-half_width, -half_height, -half_depth)
-    GL.glVertex3f(-half_width, -half_height,  half_depth)
-    GL.glVertex3f(-half_width,  half_height,  half_depth)
-    GL.glVertex3f(-half_width,  half_height, -half_depth)
+    GL.glVertex3f( -half_width, -half_height, -half_depth )
+    GL.glVertex3f( -half_width, -half_height,  half_depth )
+    GL.glVertex3f( -half_width,  half_height,  half_depth )
+    GL.glVertex3f( -half_width,  half_height, -half_depth )
     
     GL.glEnd()
     
@@ -365,10 +371,10 @@ def _five_face_box(width,height,depth, color):
     GL.glBegin(GL.GL_QUADS)
 
     # Top Face
-    GL.glVertex3f(-half_width,  half_height, -half_depth)
-    GL.glVertex3f(-half_width,  half_height,  half_depth)
-    GL.glVertex3f( half_width,  half_height,  half_depth)
-    GL.glVertex3f( half_width,  half_height, -half_depth)
+    GL.glVertex3f( -half_width,  half_height, -half_depth )
+    GL.glVertex3f( -half_width,  half_height,  half_depth )
+    GL.glVertex3f(  half_width,  half_height,  half_depth )
+    GL.glVertex3f(  half_width,  half_height, -half_depth )
     
     GL.glEnd()
     
@@ -376,26 +382,26 @@ def _five_face_box(width,height,depth, color):
     #GL.glBegin(GL.GL_QUADS)
     #
     ## Bottom Face
-    #GL.glVertex3f(-half_width, -half_height, -half_depth)
-    #GL.glVertex3f( half_width, -half_height, -half_depth)
-    #GL.glVertex3f( half_width, -half_height,  half_depth)
-    #GL.glVertex3f(-half_width, -half_height,  half_depth)
+    #GL.glVertex3f( -half_width, -half_height, -half_depth )
+    #GL.glVertex3f(  half_width, -half_height, -half_depth )
+    #GL.glVertex3f(  half_width, -half_height,  half_depth )
+    #GL.glVertex3f( -half_width, -half_height,  half_depth )
     #
     #GL.glEnd()
 
-def draw_lego_brick(width, length, height, color):
-    grid=LEGO_GRID
-    _width=width*grid
-    _depth=length*grid
-    _height=LEGO_BIG_HEIGHT if height else LEGO_SMALL_HEIGHT
-    _five_face_box(_width, _height, _depth, color)
+def draw_lego_brick( width, length, height, color ):
+    grid = LEGO_GRID
+    grid_width = width*grid
+    grid_depth = length*grid
+    grid_height = LEGO_BIG_HEIGHT if height else LEGO_SMALL_HEIGHT
+    _five_face_box( grid_width, grid_height, grid_depth, color )
     GL.glPushMatrix()
     
-    GL.glTranslatef((grid-_width)/2.0, LEGO_BUMP_HEIGHT/2.0, (-grid-_depth)/2.0)
-    for _i in range(0, width):
-        for _j in range(0, length):
-            GL.glTranslatef(0.0, 0.0, grid)
-            _caped_cylinder(LEGO_BUMP_RADIUS, _height+LEGO_BUMP_HEIGHT, color, 32)
-        GL.glTranslatef(0.0, 0.0, -length*grid)
-        GL.glTranslatef(grid, 0.0, 0.0)
+    GL.glTranslatef( (grid-grid_width)/2.0, LEGO_BUMP_HEIGHT/2.0, (-grid-grid_depth)/2.0 )
+    for _i in range( 0, width ):
+        for _j in range( 0, length ):
+            GL.glTranslatef( 0.0, 0.0, grid )
+            _caped_cylinder( LEGO_BUMP_RADIUS, grid_height+LEGO_BUMP_HEIGHT, color, 32 )
+        GL.glTranslatef( 0.0, 0.0, -length*grid )
+        GL.glTranslatef( grid, 0.0, 0.0 )
     GL.glPopMatrix()
