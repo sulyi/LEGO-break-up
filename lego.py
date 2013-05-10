@@ -43,7 +43,9 @@ L_DRAW_2D = None
 L_DRAW_3D = None
 
 class LoopError( ValueError ):
-    pass
+    def __init__( self, message, errno=None ):
+        super(ValueError, self).__init__(message)
+        self.errno = errno
 
 class piece( object ):
     def __init__( self, sides, size, color,  position = (0.0, 0.0, 0.0) ):
@@ -135,9 +137,9 @@ class piece( object ):
     def is_closed( cls, sides ):
         length = len( sides )
         if length < 4:
-            raise LoopError, "Too few sides given to describe a rectangular shape"
+            raise LoopError("Too few sides given to describe a rectangular shape", 1001)
         if length % 2 == 1:
-            raise LoopError, "Odd number of sides can't border a rectangular shape"
+            raise LoopError("Odd number of sides can't border a rectangular shape", 1002)
         xmax=0
         xmin=0
         ymax=0
@@ -161,11 +163,11 @@ class piece( object ):
         i+=1
         j+=1
         if vertical[j] and horizontal[i]:
-            raise LoopError, "Neither even nor odd indexed sides are closed"
+            raise LoopError("Neither even nor odd indexed sides are closed", 1020)
         if vertical[j]:
-            raise LoopError, "Even indexed sides are not closed."
+            raise LoopError("Even indexed sides are not closed", 1000)
         if horizontal[i]:
-            raise LoopError, "Odd indexed sides are not closed"
+            raise LoopError("Odd indexed sides are not closed", 1010)
         return  horizontal[:-1], vertical[:-1], xmax, xmin, ymax, ymin
         
     def __is_closed(self, sides):

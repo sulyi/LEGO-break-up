@@ -210,7 +210,7 @@ class layer_manager( object ):
         self._image_list.append(( tex, width, height, x, y, x+width+scale[0], y+height+scale[1] ))
         return len(self._image_list) - 1
     
-    def __delitem__( self, key ):
+    def remove( self, key ):
         del self._image_list[key]
         if self.layer_list is not None:
             GL.glDeleteTextures([self.layer_list[key][0]])
@@ -254,7 +254,7 @@ class dynamic_layer_manager( layer_manager ):
                                   x, y, x+width+scale[0], y+height+scale[1] )
         return len(self.layer_list) - 1
     
-    def __delitem__(self, key):
+    def remove(self, key):
         GL.glDeleteTextures([self.layer_list[key][0]])
         del self.layer_list[key]
     

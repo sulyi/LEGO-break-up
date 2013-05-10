@@ -29,8 +29,14 @@ def main():
     
     print "Initializing locale ...",
     gettext.install('default', 'locale')
-    po = { "position":  _("Position"), "height" : _("Height"), "big" :  _("Big"), "small" : _("Small"), 
-           "sides" : _("Sides"), "grid" : _("Grid") }
+    po = { "position" :  _("Position"), "height" : _("Height"), "big" :  _("Big"), "small" : _("Small"), 
+           "sides" : _("Sides"), "grid" : _("Grid"), 
+           "few"      : _("Too few sides given to describe a rectangular shape"),
+           "not_even" : _("Odd number of sides can't border a rectangular shape"),
+           "both"     : _("Neither even nor odd indexed sides are closed"),
+           "even"     : _("Even indexed sides are not closed"),
+           "odd"      : _("Odd indexed sides are not closed")
+           }
     for k in po:
         po[k] = unicode(po[k],'utf8')
     print "Done"
@@ -57,6 +63,7 @@ def main():
     button_error_color = (0.8, 0.4, 0.4)
     
     title = pygame.font.SysFont("courier", 24, True, True)
+    error = pygame.font.SysFont("courier", 18, True, True)
     small = pygame.font.SysFont("courier", 14, True, True)
     title_scale = 15
     sub_scale = -5
@@ -269,6 +276,7 @@ def main():
             if rotating:
                 rotrot = (rotrot + rot_speed/2) % 360
                 GL.glRotatef( rotrot, 0.0, 1.0, 0.0 )
+                
         else:
             pygame.display.flip()
             GL.glClear( GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT )
@@ -311,18 +319,31 @@ def main():
                     b.value = b.ref
                 if b is controls["raise"]:
                     grid_level += 1
-                    dyn_layers.add( "grid-level", title.render(str(grid_level),True,text_color), 75, 377, (0,title_scale) )
+                    dyn_layers.add( "grid-level", small.render(str(grid_level),True,text_color), 75, 377, (0,title_scale) )
                 if b is controls["lower"]:
                     grid_level -= 1
-                    dyn_layers.add( "grid-level", title.render(str(grid_level),True,text_color), 75, 377, (0,title_scale) )
+                    dyn_layers.add( "grid-level", small.render(str(grid_level),True,text_color), 75, 377, (0,title_scale) )
                 if b is controls["send"]:
                     all_ok = True
                     errors = set()
                     try:
+                        try:
+                            dyn_layers.remove("error")
+                        except KeyError:
+                            pass
                         sides = tuple( int(i) for i in controls["sides"].value.split(',') )
                         lego.piece.is_closed(sides)
-                    except lego.LoopError:
-                        #TODO: write message on screen (error code)
+                    except lego.LoopError as e:
+                        if e.errno == 1001:
+                            dyn_layers.add( "error", error.render(po["few"],True,text_color), 180, 5, )
+                        elif e.errno == 1002:
+                            dyn_layers.add( "error", error.render(po["not_even"],True,text_color), 180, 5 )
+                        elif e.errno == 1020:
+                            dyn_layers.add( "error", error.render(po["both"],True,text_color), 180, 5 )
+                        elif e.errno == 1000:
+                            dyn_layers.add( "error", error.render(po["even"],True,text_color), 180, 5 )
+                        elif e.errno == 1010:
+                            dyn_layers.add( "error", error.render(po["odd"],True,text_color), 180, 5 )
                         errors.add(controls["sides"])
                         all_ok = False
                     except ValueError:
@@ -334,12 +355,12 @@ def main():
                         errors.add(controls["x"])
                         all_ok = False
                     try:
-                        y = int( float( controls["y"].value )*3 ) / 3.0
+                        y = int( float( controls["y"].value ) )
                     except ValueError:
                         errors.add(controls["y"])
                         all_ok = False
                     try:
-                        z = int( float( controls["z"].value ) )
+                        z = round( float( controls["z"].value )*3 ) / 3.0
                     except ValueError:
                         errors.add(controls["z"])
                         all_ok = False

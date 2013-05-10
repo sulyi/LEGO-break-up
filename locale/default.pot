@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2013-04-07 15:30+0200\n"
+"POT-Creation-Date: 2013-05-10 01:35+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,14 +17,46 @@ msgstr ""
 "Content-Type: text/plain; charset=CHARSET\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: main.py:36
+#: main.py:32
+msgid "Big"
+msgstr ""
+
+#: main.py:37
+msgid "Even indexed sides are not closed"
+msgstr ""
+
+#: main.py:33
+msgid "Grid"
+msgstr ""
+
+#: main.py:32
 msgid "Height"
 msgstr ""
 
 #: main.py:36
-msgid "Length"
+msgid "Neither even nor odd indexed sides are closed"
 msgstr ""
 
-#: main.py:36
-msgid "Width"
+#: main.py:38
+msgid "Odd indexed sides are not closed"
+msgstr ""
+
+#: main.py:35
+msgid "Odd number of sides can't border a rectangular shape"
+msgstr ""
+
+#: main.py:32
+msgid "Position"
+msgstr ""
+
+#: main.py:33
+msgid "Sides"
+msgstr ""
+
+#: main.py:32
+msgid "Small"
+msgstr ""
+
+#: main.py:34
+msgid "Too few sides given to describe a rectangular shape"
 msgstr ""
