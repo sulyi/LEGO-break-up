@@ -6,6 +6,7 @@ Created on 2013.05.03.
 import OpenGL.GL as GL
 
 import pygame
+import numpy as np
 
 from reference import reference
 
@@ -200,14 +201,22 @@ class layer_manager( object ):
     
     def __init__(self):
         self._image_list = list()
-        self.layer_list = None
-        self.position = None
+        self.layer_list = list()
+        self.position = 0
     
     def add( self, tex, x, y, scale=(0,0) ):
-        tex = self.__class__.growPOT(tex)
-        width = tex.get_width()
-        height = tex.get_height()
-        self._image_list.append(( tex, width, height, x, y, x+width+scale[0], y+height+scale[1] ))
+        if isinstance( tex, pygame.Surface ):
+            tex = self.__class__.growPOT(tex)
+            width = tex.get_width()
+            height = tex.get_height()
+            self._image_list.append(( tex, width, height, x, y, x+width+scale[0], y+height+scale[1] ))
+        elif isinstance( tex, np.int64 ):
+            act = GL.glGetInteger(GL.GL_ACTIVE_TEXTURE)
+            GL.glBindTexture( GL.GL_TEXTURE_2D, tex )
+            width = GL.glGetTexLevelParameteriv( GL.GL_TEXTURE_2D, 0, GL.GL_TEXTURE_WIDTH )
+            height = GL.glGetTexLevelParameteriv( GL.GL_TEXTURE_2D, 0, GL.GL_TEXTURE_HEIGHT )
+            GL.glBindTexture( GL.GL_TEXTURE_2D, act )
+            self.layer_list.append(( tex, x, y, x+width+scale[0], y+height+scale[1] ))
         return len(self._image_list) - 1
     
     def remove( self, key ):
@@ -217,7 +226,6 @@ class layer_manager( object ):
             del self.layer_list[key]
     
     def load( self ):
-        self.layer_list = list()
         n = len(self._image_list)
         if n == 1:
             first = GL.glGenTextures(n)
@@ -226,8 +234,7 @@ class layer_manager( object ):
         for i,tex in enumerate( self._image_list ):
             self.layer_list.append(( self.__class__.load_2d_texture( pygame.image.tostring(tex[0], 'RGBA', True), tex[1], tex[2], first+i ),
                                   tex[3], tex[4], tex[5], tex[6] ))
-        self.position = 0
-    
+        
     def draw( self, n=None ):
         if n is not None:
             n += self.position

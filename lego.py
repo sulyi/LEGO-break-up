@@ -213,10 +213,6 @@ def gl_init( width, height ):
     GLU.gluQuadricOrientation(__quadratic, GLU.GLU_OUTSIDE)
     GLU.gluQuadricNormals(__quadratic, GLU.GLU_SMOOTH)
     
-    GL.glLightfv(GL.GL_LIGHT0, GL.GL_AMBIENT, (0.1, 0.1, 0.1, 1.0))  # Setup The Ambient Light
-    GL.glLightfv(GL.GL_LIGHT0, GL.GL_DIFFUSE, (0.8, 0.8, 0.8, 1.0))  # Setup The Diffuse Light
-    GL.glEnable(GL.GL_LIGHT0)                                        # Enable Light One
-    
     GL.glClearColor(0.0, 0.2, 0.5, 1.0)
     GL.glViewport(0,0,800,600)
     
