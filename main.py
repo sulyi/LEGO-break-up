@@ -67,11 +67,11 @@ def main():
     print "Done"
     
     print "Initializing screen ...",
-    pygame.display.set_mode ((window_width,window_height), pygame.OPENGL|pygame.DOUBLEBUF, 24)
+    pygame.display.set_mode ( (window_width,window_height), pygame.OPENGL|pygame.DOUBLEBUF|pygame.RESIZABLE, 24 )
     print "Done"
     
     print "Initializing opengl ...",
-    lego.gl_init(800,600)
+    lego.gl_init( window_width, window_height )
     print "Done"
     
     # draw dialog screen 
@@ -177,6 +177,8 @@ def main():
     GL.glLightfv( GL.GL_LIGHT0, GL.GL_DIFFUSE, (light_amb, light_amb, light_amb, 1.0) )                    # Setup The Diffuse Light
     GL.glEnable(GL.GL_LIGHT0)                                                                              # Enable Light One
     
+    eps = sys.float_info.epsilon
+    
     ticker = pygame.time.Clock()
     
     options_on = False
@@ -240,6 +242,16 @@ def main():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
+            elif event.type == pygame.VIDEORESIZE:
+                window_width, window_height = event.size
+                pygame.display.set_mode ( (window_width,window_height), pygame.OPENGL|pygame.DOUBLEBUF|pygame.RESIZABLE, 24 )
+                lego.setviewport(event.w, event.h)
+                clear_color = GL.glGetFloatv(GL.GL_COLOR_CLEAR_VALUE)
+                GL.glClearColor( 0.0, 0.0, 0.0, 0.0 )
+                GL.glClear( GL.GL_COLOR_BUFFER_BIT )
+                GL.glClearColor( *clear_color )
+                ticker.tick(fps/6)
+                
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     running=False
@@ -277,7 +289,6 @@ def main():
                     slow = False
                     mouse_sens = -120
                     move_speed = 0.5
-                    
             elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 mouse_down = True
                 GL.glSelectBuffer( 64 )
@@ -460,21 +471,21 @@ def main():
                     else:
                         controls = dict_union(controls, options)
                     options_on = not options_on
-                elif b is controls["raise_mblur"] and mblur_rate < 0.9 - sys.float_info.epsilon:
+                elif b is controls["raise_mblur"] and mblur_rate < 0.9 - eps:
                     mblur_rate += 0.1
                     options_dyn_layers.add( "mblur-level", title.render(str(mblur_rate),True,text_color), 231, 331, (0,title_scale) )
-                elif b is controls["lower_mblur"] and mblur_rate > 0.1 + sys.float_info.epsilon:
+                elif b is controls["lower_mblur"] and mblur_rate > 0.1 + eps:
                     mblur_rate -= 0.1
                     options_dyn_layers.add( "mblur-level", title.render(str(mblur_rate),True,text_color), 231, 331, (0,title_scale) )
                 elif b is controls["lower_light"] and light_int > 0.0:
                     light_int -= 0.1
-                    if light_int < sys.float_info.epsilon:
+                    if light_int < eps:
                         light_int = 0.0
                     light_amb = 1.0 - (1.0 - light_int) ** 2
                     GL.glLightfv( GL.GL_LIGHT0, GL.GL_AMBIENT, (light_amb * 0.2, light_amb * 0.2, light_amb * 0.2, 1.0) )  # Setup The Ambient Light
                     GL.glLightfv( GL.GL_LIGHT0, GL.GL_DIFFUSE, (light_amb, light_amb, light_amb, 1.0) )
                     options_dyn_layers.add( "light-level", title.render(str(light_int) ,True,text_color), 231, 430, (0,title_scale) )
-                elif b is controls["raise_light"] and light_int < 1.0 - sys.float_info.epsilon:
+                elif b is controls["raise_light"] and light_int < 1.0 - eps:
                     light_int += 0.1
                     light_amb = 1.0 - (1.0 - light_int) ** 2
                     GL.glLightfv( GL.GL_LIGHT0, GL.GL_AMBIENT, (light_amb * 0.2, light_amb * 0.2, light_amb * 0.2, 0.2) )  # Setup The Ambient Light

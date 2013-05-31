@@ -39,9 +39,6 @@ LEGO_SMALL = False
 SCREEN_WIDTH = None 
 SCREEN_HEIGHT = None
 
-L_DRAW_2D = None
-L_DRAW_3D = None
-
 class LoopError( ValueError ):
     def __init__( self, message, errno=None ):
         super(ValueError, self).__init__(message)
@@ -197,15 +194,13 @@ class piece( object ):
         GL.glPopMatrix()
 
 def gl_init( width, height ):
-    global __legocaptex,__quadratic, \
-           L_DRAW_2D,L_DRAW_3D,  \
-           SCREEN_WIDTH, SCREEN_HEIGHT
+    global __legocaptex,__quadratic
+    
+    print GL.OpenGL.UNSIGNED_BYTE_IMAGES_AS_STRING
+    
+    setviewport(width, height)
     
     __legocaptex = layer_manager.load_2d_texture(pygame.image.tostring(__image, "RGBA"), LEGO_CAP_WIDTH, LEGO_CAP_HEIGHT)
-    
-    SCREEN_WIDTH = width
-    SCREEN_HEIGHT = height
-   
     __quadratic = GLU.gluNewQuadric()
     
     GLU.gluQuadricTexture(__quadratic, GLU.GLU_TRUE)
@@ -213,8 +208,7 @@ def gl_init( width, height ):
     GLU.gluQuadricOrientation(__quadratic, GLU.GLU_OUTSIDE)
     GLU.gluQuadricNormals(__quadratic, GLU.GLU_SMOOTH)
     
-    GL.glClearColor(0.0, 0.2, 0.5, 1.0)
-    GL.glViewport(0,0,800,600)
+    GL.glClearColor( 0.0, 0.2, 0.5, 1.0 )
     
     GL.glEnable(GL.GL_POINT_SMOOTH)
     GL.glEnable(GL.GL_LINE_SMOOTH)
@@ -230,6 +224,12 @@ def gl_init( width, height ):
     #GL.glGenLists(1)
     
     draw_mode_3d()
+
+def setviewport( width, height ):
+    global SCREEN_WIDTH, SCREEN_HEIGHT 
+    SCREEN_WIDTH = width
+    SCREEN_HEIGHT = height
+    GL.glViewport( 0, 0, width, height )
 
 def draw_mode_2d( pos=(0,0) ):
     global SCREEN_WIDTH, SCREEN_HEIGHT
