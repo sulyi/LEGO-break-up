@@ -49,7 +49,7 @@ class piece( object ):
         self.sides = sides
         self.color = color
         self.size = size
-        self.position = position
+        self.position = np.array(position)
         
         height = LEGO_BIG_HEIGHT if self.size else LEGO_SMALL_HEIGHT
         length = self.bottom - self.top
@@ -119,7 +119,7 @@ class piece( object ):
     @position.setter
     def position( self, position ):
         self.__position = position
-        self.__real_position = (position[0] * LEGO_GRID, position[2] * LEGO_BIG_HEIGHT, position[1] * LEGO_GRID )
+        self.__real_position = (position[0] * LEGO_GRID, position[1] * LEGO_BIG_HEIGHT, position[2] * LEGO_GRID )
                 
     @property
     def sides( self ):
@@ -196,8 +196,6 @@ class piece( object ):
 def gl_init( width, height ):
     global __legocaptex,__quadratic
     
-    print GL.OpenGL.UNSIGNED_BYTE_IMAGES_AS_STRING
-    
     setviewport(width, height)
     
     __legocaptex = layer_manager.load_2d_texture(pygame.image.tostring(__image, "RGBA"), LEGO_CAP_WIDTH, LEGO_CAP_HEIGHT)
@@ -231,13 +229,13 @@ def setviewport( width, height ):
     SCREEN_HEIGHT = height
     GL.glViewport( 0, 0, width, height )
 
-def draw_mode_2d( pos=(0,0) ):
+def draw_mode_2d( pick=(0,0) ):
     global SCREEN_WIDTH, SCREEN_HEIGHT
     
     GL.glMatrixMode(GL.GL_PROJECTION)
     GL.glLoadIdentity()
     if GL.glGetInteger(GL.GL_RENDER_MODE) == GL.GL_SELECT:
-        GLU.gluPickMatrix( pos[0], SCREEN_HEIGHT-pos[1], 10, 10, np.array((0, 0, SCREEN_WIDTH, SCREEN_HEIGHT)) )
+        GLU.gluPickMatrix( pick[0], SCREEN_HEIGHT-pick[1], 10, 10, np.array((0, 0, SCREEN_WIDTH, SCREEN_HEIGHT)) )
     GL.glOrtho(0.0, SCREEN_WIDTH, SCREEN_HEIGHT, 0.0, -1.0, 10.0)
     GL.glMatrixMode(GL.GL_MODELVIEW)
     GL.glLoadIdentity()
@@ -247,13 +245,13 @@ def draw_mode_2d( pos=(0,0) ):
     GL.glDisable(GL.GL_DEPTH_TEST)
     GL.glDisable(GL.GL_LIGHTING)
 
-def draw_mode_3d( pos=(0,0) ):
+def draw_mode_3d( pick=(0,0) ):
     global SCREEN_WIDTH, SCREEN_HEIGHT
     
     GL.glMatrixMode(GL.GL_PROJECTION)
     GL.glLoadIdentity()
     if GL.glGetInteger(GL.GL_RENDER_MODE) == GL.GL_SELECT:
-        GLU.gluPickMatrix( pos[0], SCREEN_HEIGHT-pos[1], 1.0, 1.0, np.array((0, 0, SCREEN_WIDTH, SCREEN_HEIGHT)) )
+        GLU.gluPickMatrix( pick[0], SCREEN_HEIGHT-pick[1], 1.0, 1.0, np.array((0, 0, SCREEN_WIDTH, SCREEN_HEIGHT)) )
     GLU.gluPerspective(45.0, float(SCREEN_WIDTH)/float(SCREEN_HEIGHT), 0.1, 100.0)
     
     GL.glMatrixMode(GL.GL_MODELVIEW)

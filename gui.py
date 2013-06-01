@@ -136,11 +136,11 @@ class textbox( button ):
                 layer_manager.draw_ortho_layer( tex[0], x, y+i*(linesize+self.text_scale[1]), x+tex[1]+self.text_scale[0], y+i*linesize+tex[2]+self.text_scale[1]*self.lines )
 
 class toggle( button ):
-    def __init__(self, x, y, width, height, color, focus_color, error_color, ref, value ):
+    def __init__(self, x, y, width, height, color, focus_color, error_color, value, ref ):
         super( toggle, self ).__init__( x, y, width, height, color, focus_color, error_color, False )
-        self.ref = ref
-        if isinstance( value, reference ):
-            self.__value = value
+        self.ref = value
+        if isinstance( ref, reference ):
+            self.__value = ref
         else:
             raise ValueError, "Toggle button should have a reference as value"
     def draw( self, _focused=None, error=False ):
@@ -179,6 +179,7 @@ class layer_manager( object ):
         
         GL.glBegin(GL.GL_QUADS)
         GL.glTexCoord2f(0.0, 1.0); GL.glVertex2i(x,y)
+        # FIXME: height should be height+y and so on ... (change effects def add)
         GL.glTexCoord2f(0.0, 0.0); GL.glVertex2i(x,height)
         GL.glTexCoord2f(1.0, 0.0); GL.glVertex2i(width,height)
         GL.glTexCoord2f(1.0, 1.0); GL.glVertex2i(width,y)    
