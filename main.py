@@ -12,7 +12,8 @@ try:
     import numpy as np
     
     import OpenGL.GL as GL
-    import OpenGL.GLU as GLU  
+    import OpenGL.GLU as GLU 
+     
 except ImportError:
     with open( 'README.md', 'r' ) as markdown:
         for line in markdown:
@@ -39,6 +40,29 @@ def dict_union( a, b ):
         return c
     else:
         raise ValueError, "Two dictionary is expected"
+
+def collide(p1, p2):
+    if isinstance(p1, lego.piece) and isinstance(p2, lego.piece):
+        if p1 is p2:
+            return False
+        if not ( p1.left   + p1.position[0] >= p2.right                  + p2.position[0] or p1.right                  + p1.position[0] <= p2.left   + p2.position[0] ) and \
+           not (             p1.position[1] >= (1 if p2.size else 1.0/3) + p2.position[1] or (1 if p1.size else 1.0/3) + p1.position[1] <= p2.position[1] )             and \
+           not ( p1.bottom + p1.position[2] >= p2.top                    + p2.position[2] or p1.top                    + p1.position[2] <= p2.bottom + p2.position[2] )     :
+            d = np.array(( p2.position[0], p2.position[2] )) - np.array(( p1.position[0], p1.position[2] ))
+            hit = False
+            for s in p1.coords:
+                hit |= p2.is_hit(s - d)
+                if hit:
+                    return True
+            for s in p2.coords:
+                hit |= p1.is_hit(s + d)
+                if hit:
+                    return True
+            return False
+        else:
+            return False
+            
+         
 
 def main():
     window_width = 800
@@ -175,11 +199,11 @@ def main():
     
     print "\nEntering drawing loop\n"
     pieces = list()
-    pieces.append(lego.piece( (4,2,-2,2,-1,1,-2,-1,-1,-2,2,-2), lego.LEGO_BIG,   (1.0, 0.1, 0.2), (-6, 0,-6) ))
-    pieces.append(lego.piece( (1,-1,1,1,1,-1,1,4,-3,-1,-1,-2),  lego.LEGO_BIG,   (0.2, 0.8, 0.3), (-8, 0, 2) ))
-    pieces.append(lego.piece( (2,2,1,1,-1,2,-2,-5),             lego.LEGO_BIG,   (0.2, 0.3, 0.8), ( 5, 0, 1) ))
-    pieces.append(lego.piece( (3,4,-3,-1,-1,-2,1,-1),           lego.LEGO_BIG,   (0.8, 0.3, 0.8), ( 1, 0,-2) ))
-    pieces.append(lego.piece( (2,7,-2,-5,-2,-1,2,-1),           lego.LEGO_SMALL, (0.9, 0.9, 0.3), ( 0, 1, 0) ))
+    pieces.append(lego.piece( (4,2,-2,2,-1,1,-2,-1,-1,-2,2,-2), lego.LEGO_BIG,   (1.0, 0.1, 0.2), (-6, 0,    -6) ))
+    pieces.append(lego.piece( (1,-1,1,1,1,-1,1,4,-3,-1,-1,-2),  lego.LEGO_SMALL, (0.2, 0.8, 0.3), (-8, 2.0/3, 2) ))
+    pieces.append(lego.piece( (2,2,1,1,-1,2,-2,-5),             lego.LEGO_SMALL, (0.2, 0.3, 0.8), ( 5, 1.0/3, 1) ))
+    pieces.append(lego.piece( (5,6,-5,-1,-1,-4,1,-1),           lego.LEGO_BIG,   (0.8, 0.3, 0.8), ( 1, 0    ,-2) ))
+    pieces.append(lego.piece( (2,7,-2,-5,-2,-1,2,-1),           lego.LEGO_SMALL, (0.9, 0.9, 0.3), ( 0, 1,     0) ))
     
     lightp = np.array((2.0, 4.0, -4.0, 1.0))
     
@@ -323,7 +347,7 @@ def main():
                         if distance > j[1] or distance is None:
                             distance = j[1]
                             chosen_index = j[2][0]
-                    saved_position = pieces[chosen_index].position
+                    start_position = pieces[chosen_index].position
                     if menu.get() == 1:
                         edit["x"].value = format( pieces[chosen_index].position[0], 'g' )
                         edit["y"].value = format( pieces[chosen_index].position[1], 'g')
@@ -356,7 +380,17 @@ def main():
                     near =  np.array(GLU.gluUnProject( x, y, 0, GL.glGetDoublev(GL.GL_MODELVIEW_MATRIX), GL.glGetDoublev(GL.GL_PROJECTION_MATRIX), GL.glGetIntegerv(GL.GL_VIEWPORT) ))
                     
                     drag = (drag_from - ( (drag_from[1]-near[1]) / (far[1]-near[1]) ) * (far-near) - near) / -lego.LEGO_GRID
-                    pieces[chosen_index].position = saved_position + drag.round()
+                    
+                    prev_position = pieces[chosen_index].position
+                    pieces[chosen_index].position = start_position + drag.round()
+                    
+                    for i,p in enumerate(pieces):
+                        collision = collide( p, pieces[chosen_index] )
+                        if collision:
+                            break
+                    if collision:
+                        pieces[chosen_index].position = prev_position
+                    
                     
                     
             elif event.type == pygame.MOUSEBUTTONUP and event.button == 1:
@@ -484,11 +518,11 @@ def main():
                     except ValueError:
                         errors.add(edit["x"])
                     try:
-                        y = float( edit["y"].value )
+                        y = round( float( edit["y"].value )*3 ) / 3.0
                     except ValueError:
                         errors.add(edit["y"])
                     try:
-                        z = round( float( edit["z"].value )*3 ) / 3.0
+                        z = float( edit["y"].value )
                     except ValueError:
                         errors.add(edit["z"])
                     if piecesize.get() is None:

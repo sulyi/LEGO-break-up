@@ -72,28 +72,28 @@ class piece( object ):
         GL.glNormal3f(0.0, 1.0, 0.0)
         GLU.gluTessBeginPolygon(self.__tess,None)
         GLU.gluTessBeginContour(self.__tess)
-        for i in range(0,len(self.__xcoords)):
-            vertex =  (self.__xcoords[i]*LEGO_GRID, height, self.__ycoords[i-1]*LEGO_GRID)
+        for i in range(0,len(self.coords)):
+            vertex =  (self.coords[i][0]*LEGO_GRID, height, self.coords[i-1][1]*LEGO_GRID)
             GLU.gluTessVertex(self.__tess, vertex, vertex)
-            vertex =  (self.__xcoords[i]*LEGO_GRID, height, self.__ycoords[i]*LEGO_GRID)
+            vertex =  (self.coords[i][0]*LEGO_GRID, height, self.coords[i][1]*LEGO_GRID)
             GLU.gluTessVertex(self.__tess, vertex, vertex)
         GLU.gluTessEndContour(self.__tess)
         GLU.gluTessEndPolygon(self.__tess)
         
-        for i in range(0,len(self.__xcoords)):
+        for i in range(0,len(self.coords)):
             GL.glBegin(GL.GL_QUADS)
             sign = float(np.sign(self.sides[2*i-1]))
             GL.glNormal3f( sign, 0.0, 0.0 )
-            GL.glVertex3f( self.__xcoords[i] * LEGO_GRID, height, self.__ycoords[i-1] * LEGO_GRID)
-            GL.glVertex3f( self.__xcoords[i] * LEGO_GRID, height, self.__ycoords[i]   * LEGO_GRID)
-            GL.glVertex3f( self.__xcoords[i] * LEGO_GRID, 0.0,    self.__ycoords[i]   * LEGO_GRID)
-            GL.glVertex3f( self.__xcoords[i] * LEGO_GRID, 0.0,    self.__ycoords[i-1] * LEGO_GRID)
+            GL.glVertex3f( self.coords[i][0] * LEGO_GRID, height, self.coords[i-1][1] * LEGO_GRID)
+            GL.glVertex3f( self.coords[i][0] * LEGO_GRID, height, self.coords[i]  [1]   * LEGO_GRID)
+            GL.glVertex3f( self.coords[i][0] * LEGO_GRID, 0.0,    self.coords[i]  [1]   * LEGO_GRID)
+            GL.glVertex3f( self.coords[i][0] * LEGO_GRID, 0.0,    self.coords[i-1][1] * LEGO_GRID)
             sign = float(np.sign(self.sides[2*i-2]))
             GL.glNormal3f( 0.0, 0.0, -sign )
-            GL.glVertex3f( self.__xcoords[i-1] * LEGO_GRID, height, self.__ycoords[i-1] * LEGO_GRID )
-            GL.glVertex3f( self.__xcoords[i]   * LEGO_GRID, height, self.__ycoords[i-1] * LEGO_GRID )
-            GL.glVertex3f( self.__xcoords[i]   * LEGO_GRID, 0.0,    self.__ycoords[i-1] * LEGO_GRID )
-            GL.glVertex3f( self.__xcoords[i-1] * LEGO_GRID, 0.0,    self.__ycoords[i-1] * LEGO_GRID )
+            GL.glVertex3f( self.coords[i-1][0] * LEGO_GRID, height, self.coords[i-1][1] * LEGO_GRID )
+            GL.glVertex3f( self.coords[i]  [0] * LEGO_GRID, height, self.coords[i-1][1] * LEGO_GRID )
+            GL.glVertex3f( self.coords[i]  [0] * LEGO_GRID, 0.0,    self.coords[i-1][1] * LEGO_GRID )
+            GL.glVertex3f( self.coords[i-1][0] * LEGO_GRID, 0.0,    self.coords[i-1][1] * LEGO_GRID )
             GL.glEnd()
             
         GL.glTranslatef( self.left*LEGO_GRID + LEGO_GRID/2.0, (LEGO_BUMP_HEIGHT+height)/2.0 , self.bottom*LEGO_GRID - LEGO_GRID/2.0 )
@@ -139,8 +139,8 @@ class piece( object ):
             raise LoopError("Odd number of sides can't border a rectangular shape", 1002)
         xmax=0
         xmin=0
-        ymax=0
-        ymin=0
+        zmax=0
+        zmin=0
         horizontal = [0]
         for i,s in enumerate( sides[::2] ):
             x = horizontal[i] + s
@@ -151,12 +151,12 @@ class piece( object ):
                 xmin = x
         vertical = [0]
         for j,s in enumerate( sides[1::2] ):
-            y = vertical[j] + s
-            vertical.append( y )
-            if y > ymax:
-                ymax = y
-            if y < ymin:
-                ymin = y
+            z = vertical[j] + s
+            vertical.append( z )
+            if z > zmax:
+                zmax = z
+            if z < zmin:
+                zmin = z
         i+=1
         j+=1
         if vertical[j] and horizontal[i]:
@@ -165,23 +165,18 @@ class piece( object ):
             raise LoopError("Even indexed sides are not closed", 1000)
         if horizontal[i]:
             raise LoopError("Odd indexed sides are not closed", 1010)
-        return  horizontal[:-1], vertical[:-1], xmax, xmin, ymax, ymin
+        return  tuple( np.array(i) for i in zip(horizontal[:-1], vertical[:-1]) ), xmax, xmin, zmax, zmin
         
     def __is_closed(self, sides):
-        r = self.__class__.is_closed(sides)
-        self.__xcoords = r[0]
-        self.__ycoords = r[1]
-        self.right = r[2]
-        self.left = r[3]
-        self.top = r[4]
-        self.bottom = r[5]
+        self.coords, self.right, self.left, self.top, self.bottom = self.__class__.is_closed(sides)
     
     def is_hit( self, point ):
         x = point[0]
         y = point[1]
         odd = False
-        for i in range(0, len(self.__xcoords) ):
-            if (self.__xcoords[i] >= x) and ((self.__ycoords[i] >= y) != (self.__ycoords[i-1] >= y)):
+        for i in range(0, len(self.coords) ):
+            print (self.coords[i][0] >= x) , ((self.coords[i][1] >= y) , (self.coords[i-1][1] >= y))
+            if (self.coords[i][0] >= x) and ((self.coords[i][1] >= y) != (self.coords[i-1][1] >= y)):
                 odd = not odd        
         return odd
     
