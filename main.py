@@ -50,17 +50,21 @@ def collide(p1, p2):
            not ( p1.bottom + p1.position[2] >= p2.top                    + p2.position[2] or p1.top                    + p1.position[2] <= p2.bottom + p2.position[2] )     :
             d = np.array(( p2.position[0], p2.position[2] )) - np.array(( p1.position[0], p1.position[2] ))
             hit = False
-            for s in p1.coords:
-                hit |= p2.is_hit(s - d)
+            for i in range( 0, len(p1.coords) ):
+                hit |= p2.is_hit( p1.coords[i] - d )
+                hit |= p2.is_hit( np.array((p1.coords[i][0], p1.coords[i-1][1])) - d )
                 if hit:
                     return True
-            for s in p2.coords:
-                hit |= p1.is_hit(s + d)
+            for i in range( 0, len(p2.coords ) ):
+                hit |= p1.is_hit( p2.coords[i] + d )
+                hit |= p1.is_hit( np.array((p2.coords[i][0], p2.coords[i-1][1])) + d )
                 if hit:
                     return True
             return False
         else:
             return False
+    else:
+        raise ValueError, "I need two lego pieces to check whether they collide"
             
          
 

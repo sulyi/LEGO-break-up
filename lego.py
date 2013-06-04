@@ -97,10 +97,10 @@ class piece( object ):
             GL.glEnd()
             
         GL.glTranslatef( self.left*LEGO_GRID + LEGO_GRID/2.0, (LEGO_BUMP_HEIGHT+height)/2.0 , self.bottom*LEGO_GRID - LEGO_GRID/2.0 )
-        for i in range( self.left+1, self.right+1 ):
-            for j in range( self.bottom+1, self.top+1 ):
+        for i in range( self.left, self.right ):
+            for j in range( self.bottom, self.top ):
                 GL.glTranslatef( 0.0, 0.0, LEGO_GRID )
-                if self.is_hit( (i,j) ):
+                if self.is_hit( (i+0.5,j+0.5) ):
                     _caped_cylinder( LEGO_BUMP_RADIUS, height+LEGO_BUMP_HEIGHT, 32 )
             GL.glTranslatef( 0.0, 0.0, length*LEGO_GRID )
             GL.glTranslatef( LEGO_GRID, 0.0, 0.0 )
@@ -175,8 +175,7 @@ class piece( object ):
         y = point[1]
         odd = False
         for i in range(0, len(self.coords) ):
-            print (self.coords[i][0] >= x) , ((self.coords[i][1] >= y) , (self.coords[i-1][1] >= y))
-            if (self.coords[i][0] >= x) and ((self.coords[i][1] >= y) != (self.coords[i-1][1] >= y)):
+            if (self.coords[i][0] > x) and ((self.coords[i][1] > y) != (self.coords[i-1][1] >y)) :
                 odd = not odd        
         return odd
     
